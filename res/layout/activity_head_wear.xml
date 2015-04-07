@@ -1,0 +1,115 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="${relativePackage}.${activityClass}" >
+
+    <!-- <WebView android:id = "@+id/wv" -->
+    <!-- android:layout_width = "fill_parent" -->
+    <!-- android:layout_height = "fill_parent" -->
+    <!-- android:text = "hellowv"/> -->
+
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+		android:orientation="horizontal">
+		
+        <TextView
+            android:id="@+id/service_index"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Servie:"
+            android:textSize="18sp" />
+
+        <Spinner
+            android:id="@+id/spinner_service"
+            android:layout_width="100sp"
+            android:layout_height="wrap_content" >
+        </Spinner>
+		<TextView
+            android:id="@+id/characteristic_index"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Characteristic:"
+            android:textSize="18sp" />
+        <Spinner
+            android:id="@+id/spinner_characteristic"
+            android:layout_width="100sp"
+            android:layout_height="wrap_content" >
+        </Spinner>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/msg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars = "vertical"
+            android:text="信息："
+            android:textSize="10sp" />
+
+        <LinearLayout
+            android:id="@+id/linearLayout3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/button1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="写通知" />
+
+            <Button
+                android:id="@+id/button2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="查看" />
+            
+            <Button
+                android:id="@+id/button3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="关通知" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/barchart"
+                android:layout_width="match_parent"
+                android:layout_height="300dip" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/linechart1"
+                android:layout_width="match_parent"
+                android:layout_height="200dip" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/linechart2"
+                android:layout_width="match_parent"
+                android:layout_height="200dip" />
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/linechart3"
+                android:layout_width="match_parent"
+                android:layout_height="200dip" />
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

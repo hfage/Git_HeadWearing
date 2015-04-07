@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">HeadWearing</string>
+    <string name="hello_world">Hello world!</string>
+	<string name="menu_scan">SCAN</string>
+	<string name="menu_stop">STOP</string>
+	<string name="testActivity">testActivity</string>
+	
+	<!-- In BLEDevice.java -->
+	<string name="ble_not_supported">BLE is not supported</string>
+	<string name="error_bluetooth_not_supported">Bluetooth not supported.</string>
+	<string name="unknown_device">Unknown device</string>
+	
+	
+</resources>
