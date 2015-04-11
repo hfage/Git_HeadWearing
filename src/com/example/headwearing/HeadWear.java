@@ -83,6 +83,7 @@ public class HeadWear extends Activity {
 	private Button button1;
 	private Button button2;
 	private Button button3;
+	private Button button4;
 	private Spinner spinner_service;
 	private ArrayAdapter spinner_service_adapter;
 	private Spinner spinner_characteristic;
@@ -106,9 +107,11 @@ public class HeadWear extends Activity {
 		button1 = (Button) findViewById(R.id.button1);
 		button2 = (Button) findViewById(R.id.button2);
 		button3 = (Button) findViewById(R.id.button3);
+		button4 = (Button) findViewById(R.id.button4);
 		button1.setOnClickListener(new ClickEvent());
 		button2.setOnClickListener(new ClickEvent());
 		button3.setOnClickListener(new ClickEvent());
+		button4.setOnClickListener(new ClickEvent());
 		spinner_service = (Spinner) findViewById(R.id.spinner_service);
 		spinner_characteristic = (Spinner) findViewById(R.id.spinner_characteristic);
 		String[] service_string = new String[9];
@@ -247,32 +250,6 @@ public class HeadWear extends Activity {
 					mBluetoothLeService.setCharacteristicNotification(characteristic, true);
 				}
 			}else if(v == button2){
-				int a = 1;
-				if(a == 0){
-					mBluetoothLeService.closeNotification();
-					//String svm_test_result = svm_test();
-					//tv.setText("button2 onclick \n svm_result: " + svm_test_result);
-				}else{
-					if(mBluetoothLeService == null){
-						tv.setText("mBluetoothLeService didn't connect. \nCan not view service or characteristic.");
-					}else{
-						String text = "Services and characteristics: \n";
-						for(BluetoothGattService bs : mBluetoothLeService.mBluetoothGatt.getServices()){
-							text += bs.getUuid().toString() + "\n";
-							for(BluetoothGattCharacteristic c : bs.getCharacteristics()){
-								text += " * " + c.getUuid().toString() + "\n";
-							}
-							tv.setText(text);
-						}
-						//BluetoothGattCharacteristic characteristic = mBluetoothLeService.mBluetoothGatt.getServices().get(1).getCharacteristics().get(1);
-						//mBluetoothLeService.setCharacteristicNotification(characteristic, true);
-					}
-				}
-				
-			}else if(v == button3){
-				mBluetoothLeService.closeNotification();
-			}
-			else{
 				if(mBluetoothLeService == null){
 					tv.setText("mBluetoothLeService didn't connect. \nCan not view service or characteristic.");
 				}else{
@@ -284,9 +261,24 @@ public class HeadWear extends Activity {
 						}
 						tv.setText(text);
 					}
-					BluetoothGattCharacteristic characteristic = mBluetoothLeService.mBluetoothGatt.getServices().get(1).getCharacteristics().get(1);
-					mBluetoothLeService.setCharacteristicNotification(characteristic, true);
 				}
+			}else if(v == button3){
+				mBluetoothLeService.closeNotification();
+			}else if(v == button4){
+				String svm_test_result = svm_test();
+				float[][][] f = new float[3][4][5];
+				
+				for(int i = 0; i < 3; i++){
+					for(int j = 0; j < 4; j++){
+						for(int k = 0; k < 5; k++){
+							f[i][j][k] = i * j * k;
+						}
+					}
+				}
+				//svm_test_result = "" + f.length + f[0].length + f[0][0].length;
+				tv.setText("button2 onclick \n svm_result: " + svm_test_result);
+			}else{
+				// 
 			}
 			
 		}
@@ -294,65 +286,83 @@ public class HeadWear extends Activity {
 	}
 	
 	public String svm_test(){
-		//定义训练集点a{10.0, 10.0} 和 点b{-10.0, -10.0}，对应lable为{1.0, -1.0}
-        svm_node pa0 = new svm_node();
-        pa0.index = 0;
-        pa0.value = 10.0;
-        svm_node pa1 = new svm_node();
-        pa1.index = 1;
-        pa1.value = 10.0;
-        svm_node pb0 = new svm_node();
-        pb0.index = 0;
-        pb0.value = -10.0;
-        svm_node pb1 = new svm_node();
-        pb1.index = 1;
-        pb1.value = -10.0;
-        svm_node pd0 = new svm_node();
-        pb0.index = 0;
-        pb0.value = -1.0;
-        svm_node pd1 = new svm_node();
-        pb1.index = 1;
-        pb1.value = 1.0;
-        svm_node[] pa = {pa0, pa1}; //点a
-        svm_node[] pb = {pb0, pb1}; //点b
-        svm_node[] pd = {pd0, pd1}; //c
-        
-        svm_node[][] datas = {pa, pb}; //训练集的向量表
-        double[] lables = {10.0, -10.0}; //a,b 对应的lable
-        
-        //定义svm_problem对象
-        svm_problem problem = new svm_problem();
-        problem.l = 2; //向量个数
-        problem.x = datas; //训练集向量表
-        problem.y = lables; //对应的lable数组
-        
-        //定义svm_parameter对象
-        svm_parameter param = new svm_parameter();
-        param.svm_type = svm_parameter.C_SVC;
-        param.kernel_type = svm_parameter.LINEAR;
-        param.cache_size = 100;
-        param.eps = 0.00001;
-        param.C = 1;
-        
-        //训练SVM分类模型
-        String r = svm.svm_check_parameter(problem, param);
-        if(r != "null")
-        	return "fail:" + r;
-        //System.out.println(svm.svm_check_parameter(problem, param)); //如果参数没有问题，则svm.svm_check_parameter()函数返回null,否则返回error描述。
-        svm_model model = svm.svm_train(problem, param); //svm.svm_train()训练出SVM分类模型
-        
-        //定义测试数据点c
-        svm_node pc0 = new svm_node();
-        pc0.index = 0;
-        pc0.value = 4.1;
-        svm_node pc1 = new svm_node();
-        pc1.index = 1;
-        pc1.value = 5.0;
-        svm_node[] pc = {pc0, pc1};
-        
-        //预测测试数据的lable
-        return "result: " + svm.svm_predict(model, pc) ;
-		//return null;
+		String result = "";
+		double[] label = {1,2,3};
+		float[][] datas = { {10,10},
+							{-10,-10},
+							{0,0} };
+		MyDatas mMyDatas = new MyDatas();
+		svm_problem mProblem = mMyDatas.returnSvmProblem(label,datas);
+		svm_parameter mParam = new svm_parameter();
+		mParam.cache_size = 100;
+		mParam.eps = 0.00001;
+		mParam.C = 1;
+		result += "check: " + svm.svm_check_parameter(mProblem, mParam) + "\n";
+		float[] predict_datas = {-5,-4.1f};
+		svm_node[] mPredict = mMyDatas.returnSvmPredictData(predict_datas);
+		svm_model model = svm.svm_train(mProblem, mParam); //svm.svm_train()训练出SVM分类模型
+		result += "result: " + svm.svm_predict(model, mPredict) ;
+		return result;
+//		//定义训练集点a{10.0, 10.0} 和 点b{-10.0, -10.0}，对应lable为{1.0, -1.0}
+//        svm_node pa0 = new svm_node();
+//        pa0.index = 0;
+//        pa0.value = 10.0;
+//        svm_node pa1 = new svm_node();
+//        pa1.index = 1;
+//        pa1.value = 10.0;
+//        svm_node pb0 = new svm_node();
+//        pb0.index = 0;
+//        pb0.value = -10.0;
+//        svm_node pb1 = new svm_node();
+//        pb1.index = 1;
+//        pb1.value = -10.0;
+//        svm_node pd0 = new svm_node();
+//        pb0.index = 0;
+//        pb0.value = -1.0;
+//        svm_node pd1 = new svm_node();
+//        pb1.index = 1;
+//        pb1.value = 1.0;
+//        svm_node[] pa = {pa0, pa1}; //点a
+//        svm_node[] pb = {pb0, pb1}; //点b
+//        svm_node[] pd = {pd0, pd1}; //c
+//        
+//        svm_node[][] datas = {pa, pb}; //训练集的向量表
+//        
+//        double[] lables = {10.0, -10.0}; //a,b 对应的lable
+//        
+//        //定义svm_problem对象
+//        svm_problem problem = new svm_problem();
+//        problem.l = 2; //向量个数
+//        problem.x = datas; //训练集向量表
+//        problem.y = lables; //对应的lable数组
+//        
+//        //定义svm_parameter对象
+//        svm_parameter param = new svm_parameter();
+//        param.svm_type = svm_parameter.C_SVC;
+//        param.kernel_type = svm_parameter.LINEAR;
+//        param.cache_size = 100;
+//        param.eps = 0.00001;
+//        param.C = 1;
+//        
+//        //训练SVM分类模型
+//        String r = svm.svm_check_parameter(problem, param);
+//        if(r != "null")
+//        	return "fail:" + r;
+//        //System.out.println(svm.svm_check_parameter(problem, param)); //如果参数没有问题，则svm.svm_check_parameter()函数返回null,否则返回error描述。
+//        svm_model model = svm.svm_train(problem, param); //svm.svm_train()训练出SVM分类模型
+//        
+//        //定义测试数据点c
+//        svm_node pc0 = new svm_node();
+//        pc0.index = 0;
+//        pc0.value = 4.1;
+//        svm_node pc1 = new svm_node();
+//        pc1.index = 1;
+//        pc1.value = 5.0;
+//        svm_node[] pc = {pc0, pc1};
+//        
+//        //预测测试数据的lable
+//        return "result: " + svm.svm_predict(model, pc) ;
+//		//return null;
 	}
 	
 	public void setBarChartData(float x, float y, float z){

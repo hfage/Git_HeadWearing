@@ -1,8 +1,12 @@
 package com.example.headwearing;
 
 import java.util.ArrayList;
-
 import android.util.Log;
+import libsvm.svm_problem;
+import libsvm.svm_parameter;
+import libsvm.svm_node;
+
+
 
 
 
@@ -66,6 +70,7 @@ class MyDatas{
 			}
 			
 		}
+		
 		public boolean resetDatas(){
 			Log.w(TAG,"reset");
 			data_x.clear();
@@ -95,6 +100,7 @@ class MyDatas{
 			error_time =  5;
 			return true;
 		}
+		
 		public void calculate(){
 			Log.w(TAG,"calculate");
 			using = true;
@@ -183,6 +189,7 @@ class MyDatas{
 			standard_deviation_z_value = (float) Math.sqrt(n_variance_z_value / LEN_OF_SIGNAL_DATA);
 			return true;
 		}
+		
 		public boolean sum(){
 			Log.w(TAG,"sum");
 			if(len == LEN_OF_SIGNAL_DATA){
@@ -196,6 +203,7 @@ class MyDatas{
 				return false;
 			}
 		}
+		
 		public boolean meanValue(){
 			Log.w(TAG,"meanValue");
 			if(len == LEN_OF_SIGNAL_DATA){
@@ -207,6 +215,7 @@ class MyDatas{
 				return false;
 			}
 		}
+		
 		public boolean nVariance(){
 			Log.w(TAG,"nVariance");
 			for(int i = 0; i < LEN_OF_SIGNAL_DATA; i++){
@@ -216,5 +225,41 @@ class MyDatas{
 			}
 			return true;
 		}
+	}
+	
+	public svm_problem returnSvmProblem(double[] label, float[][] datas){
+		
+		svm_node[][] mSvmDatas = new svm_node[datas.length][datas[0].length];
+		if(mSvmDatas == null)
+			Log.e("returnSvmPrmblem","datas.len:" + datas.length + " datas[0].len:" + datas[0].length + " " );
+		svm_problem problem = new svm_problem();
+		int i = 0, j = 0;
+		for(float[] datas_2 : datas){
+			j = 0;
+			for(float datas_3 : datas_2){
+				//Log.e("returnSvmProblem","i:" + i + " j:" + j + " index:" + mSvmDatas[i][j].index);
+				mSvmDatas[i][j] = new svm_node();
+				mSvmDatas[i][j].index = j;
+				mSvmDatas[i][j].value = datas_3;
+				j++;
+			}
+			i++;
+		}
+		problem.l = datas.length;
+		problem.y = label;
+		problem.x = mSvmDatas;
+		return problem;
+	}
+	
+	public svm_node[] returnSvmPredictData(float[] datas){
+		svm_node[] mPredictData = new svm_node[datas.length];
+		int i = 0;
+		for(float data : datas){
+			mPredictData[i] = new svm_node();
+			mPredictData[i].index = i;
+			mPredictData[i].value = data;
+			i++;
+		}
+		return mPredictData;
 	}
 }
