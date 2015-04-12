@@ -266,16 +266,6 @@ public class HeadWear extends Activity {
 				mBluetoothLeService.closeNotification();
 			}else if(v == button4){
 				String svm_test_result = svm_test();
-				float[][][] f = new float[3][4][5];
-				
-				for(int i = 0; i < 3; i++){
-					for(int j = 0; j < 4; j++){
-						for(int k = 0; k < 5; k++){
-							f[i][j][k] = i * j * k;
-						}
-					}
-				}
-				//svm_test_result = "" + f.length + f[0].length + f[0][0].length;
 				tv.setText("button2 onclick \n svm_result: " + svm_test_result);
 			}else{
 				// 
@@ -296,9 +286,11 @@ public class HeadWear extends Activity {
 		svm_parameter mParam = new svm_parameter();
 		mParam.cache_size = 100;
 		mParam.eps = 0.00001;
-		mParam.C = 1;
-		result += "check: " + svm.svm_check_parameter(mProblem, mParam) + "\n";
-		float[] predict_datas = {-5,-4.1f};
+		mParam.C = 100;
+		mParam.gamma = 0.001;
+		mParam.kernel_type = svm_parameter.RBF;
+		result += "check: " + svm.svm_check_parameter(mProblem, mParam) + "\n gamma:" + mParam.gamma + "\n";
+		float[] predict_datas = {-5,-5.1f};
 		svm_node[] mPredict = mMyDatas.returnSvmPredictData(predict_datas);
 		svm_model model = svm.svm_train(mProblem, mParam); //svm.svm_train()训练出SVM分类模型
 		result += "result: " + svm.svm_predict(model, mPredict) ;
