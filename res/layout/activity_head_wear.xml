@@ -5,10 +5,10 @@
     android:orientation="vertical"
     tools:context="${relativePackage}.${activityClass}" >
 
-    <!-- <WebView android:id = "@+id/wv" -->
-    <!-- android:layout_width = "fill_parent" -->
-    <!-- android:layout_height = "fill_parent" -->
-    <!-- android:text = "hellowv"/> -->
+<!--     <WebView android:id = "@+id/wv" -->
+<!--     android:layout_width = "fill_parent" -->
+<!--     android:layout_height = "fill_parent" -->
+<!--     android:text = "hellowv"/> -->
 
     <LinearLayout
         android:id="@+id/linearLayout1"

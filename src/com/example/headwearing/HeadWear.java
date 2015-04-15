@@ -195,6 +195,7 @@ public class HeadWear extends Activity {
 //		//requestFocus();
 //		mWebView.requestFocus();
 //		mWebView.loadUrl("http://www.baidu.com");
+		
 	}
 	
 	class SpinnerServiceListener implements OnItemSelectedListener{
@@ -221,7 +222,7 @@ public class HeadWear extends Activity {
 				int position, long id) {
 			//tv.setText("spinner_characteristic click position : " + position);
 			int i = Integer.parseInt("FF",16);
-			Log.i("test","" + i);
+			MyLog.i("test","" + i);
 			tv.setText("" + i);
 			characteristic_index = position;
 		}
@@ -265,6 +266,7 @@ public class HeadWear extends Activity {
 			}else if(v == button3){
 				mBluetoothLeService.closeNotification();
 			}else if(v == button4){
+				MyLog.i("hello", "world");
 				String svm_test_result = svm_test();
 				tv.setText("button2 onclick \n svm_result: " + svm_test_result);
 			}else{
@@ -358,7 +360,7 @@ public class HeadWear extends Activity {
 	}
 	
 	public void setBarChartData(float x, float y, float z){
-		Log.i("","" + x + y + z);
+		MyLog.i("","" + x + y + z);
 		ArrayList<BarEntry> yVals = new ArrayList<BarEntry>();
 		yVals.add(new BarEntry(x, 0));
 		yVals.add(new BarEntry(y, 1));
@@ -493,9 +495,9 @@ public class HeadWear extends Activity {
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int whichButton) {
                                 	if(mBluetoothLeService != null){
-                                		Log.e("mBluetoothLeService",mBluetoothLeService.toString());
+                                		MyLog.e("mBluetoothLeService",mBluetoothLeService.toString());
                                 		try {
-                                			Log.i("unbindService", "unbind mBLEServiceConnection");
+                                			MyLog.i("unbindService", "unbind mBLEServiceConnection");
                                 			unbindService(mBLEServiceConnection);
                         				} catch (Exception e) {
                         					// TODO Auto-generated catch block
@@ -504,7 +506,7 @@ public class HeadWear extends Activity {
                                 		
                                 	}
                                 	if(mDataHandlerService != null){
-                                		Log.i("unbindService", "unbind mDataHandlerServiceConnection");
+                                		MyLog.i("unbindService", "unbind mDataHandlerServiceConnection");
                                 		unbindService(mDataHandlerServiceConnection);
                                 	}
                                 	unregisterReceiver(mBLEDateUpdateReciver);
@@ -523,14 +525,14 @@ public class HeadWear extends Activity {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
         	mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-            Log.i("test","HeadWear onServiceConnected");
+            MyLog.i("test","HeadWear onServiceConnected");
             if(!mBluetoothLeService.initialize()){
             	Toast.makeText(HeadWear.this, "Can not connect to the device: " + mDeviceAddress + "cannot init" ,Toast.LENGTH_SHORT).show();
             	unbindService(mBLEServiceConnection);
             }else{
             	if(!mBluetoothLeService.connect(mDeviceAddress)){
                 	if(DEBUG){
-                		Log.e(TAG,"Can not connect to the device: " + mDeviceAddress );
+                		MyLog.e(TAG,"Can not connect to the device: " + mDeviceAddress );
                 		tv.setText("Can't connect to BLE device.\n Address: " + mDeviceAddress + "\n Name:");
                 	}
                 	mBluetoothLeService = null;
@@ -553,7 +555,7 @@ public class HeadWear extends Activity {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
         	mDataHandlerService = ((DataHandlerService.LocalBinder) service).getService();
-            Log.i("test","HeadWear onServiceConnected mDataHandlerServiceConnection");
+            MyLog.i("test","HeadWear onServiceConnected mDataHandlerServiceConnection");
             if(!mDataHandlerService.init()){
             	unbindService(mDataHandlerServiceConnection);
             }
@@ -570,21 +572,21 @@ public class HeadWear extends Activity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if(DEBUG){
-            	Log.i(TAG,"onReceive : " + action);
+            	MyLog.i(TAG,"onReceive : " + action);
             }
             if(BLEDevice.BLE_CONNECT_DEVICE.equals(action)){
             	mDeviceName = intent.getStringExtra(BLEDevice.BLE_DEVICE_NAME);
             	mDeviceAddress = intent.getStringExtra(BLEDevice.BLE_DEVICE_ADDRESS);
-            	Log.i("receiver : ", "address : " + mDeviceAddress);
+            	MyLog.i("receiver : ", "address : " + mDeviceAddress);
             	Intent gattServiceIntent = new Intent(HeadWear.this, BluetoothLeService.class);
                 if(bindService(gattServiceIntent, mBLEServiceConnection, BIND_AUTO_CREATE)){
-                	Log.i(TAG,"bindsuccessfully");
+                	MyLog.i(TAG,"bindsuccessfully");
                 	
                 }else{
-                	Log.i(TAG,"bind un successfully");
+                	MyLog.i(TAG,"bind un successfully");
                 }
                 if(DEBUG){
-                	Log.i(TAG,"bindService");
+                	MyLog.i(TAG,"bindService");
                 }
                 Intent dataHandlerServiceIntent = new Intent(HeadWear.this, DataHandlerService.class);
                 bindService(dataHandlerServiceIntent, mDataHandlerServiceConnection, BIND_AUTO_CREATE);
@@ -605,7 +607,7 @@ public class HeadWear extends Activity {
 	            	}
             	}
             }else if(BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)){
-            	Log.i("disconnected","headwear : gatt service disconnected");
+            	MyLog.i("disconnected","headwear : gatt service disconnected");
             	tv.setText("BLE Server disconnected");
             	unbindService(mBLEServiceConnection);
             	unbindService(mDataHandlerServiceConnection);

@@ -51,7 +51,7 @@ class MyDatas{
 					data_y.add(y);
 					data_z.add(z);
 				}else{
-					Log.w("test","else");
+					MyLog.w("test","else");
 					data_x.remove(0);
 					data_x.add(x);
 					data_y.remove(0);
@@ -59,7 +59,7 @@ class MyDatas{
 					data_z.remove(0);
 					data_z.add(z);
 				}
-				//Log.w("test","endata"+len);
+				//MyLog.w("test","endata"+len);
 				return true;
 			}else{
 				error_time--;
@@ -72,7 +72,7 @@ class MyDatas{
 		}
 		
 		public boolean resetDatas(){
-			Log.w(TAG,"reset");
+			MyLog.w(TAG,"reset");
 			data_x.clear();
 			data_y.clear();
 			data_z.clear();
@@ -102,7 +102,7 @@ class MyDatas{
 		}
 		
 		public void calculate(){
-			Log.w(TAG,"calculate");
+			MyLog.w(TAG,"calculate");
 			using = true;
 			sum();
 			meanValue();
@@ -111,29 +111,29 @@ class MyDatas{
 			kurtosis();
 			correlation();
 			using = false;
-			Log.w(TAG,"calculate over.");
+			MyLog.w(TAG,"calculate over.");
 			if(HeadWear.DEBUG){
-				Log.w(TAG + "meanValue:", "" + mean_x_value);
-				Log.w(TAG + "meanValue:", "" + mean_y_value);
-				Log.w(TAG + "meanValue:", "" + mean_z_value);
-				Log.w(TAG + "n_variance:Value", "" + n_variance_x_value);
-				Log.w(TAG + "n_varianceValue:", "" + n_variance_y_value);
-				Log.w(TAG + "n_varianceValue:", "" + n_variance_z_value);
-				Log.w(TAG + "standar_deviationValue:", "" + standard_deviation_x_value);
-				Log.w(TAG + "standar_deviationValue:", "" + standard_deviation_y_value);
-				Log.w(TAG + "standar_deviationValue:", "" + standard_deviation_z_value);
-				Log.w(TAG + "kurtosisValue:", "" + kurtosis_x_value);
-				Log.w(TAG + "kurtosisValue:", "" + kurtosis_y_value);
-				Log.w(TAG + "kurtosisValue:", "" + kurtosis_z_value);
-				Log.w(TAG + "correlationValue:", "" + correlation_x_y_value);
-				Log.w(TAG + "correlationValue:", "" + correlation_y_z_value);
-				Log.w(TAG + "correlationValue:", "" + correlation_z_x_value);
+				MyLog.w(TAG + "meanValue:", "" + mean_x_value);
+				MyLog.w(TAG + "meanValue:", "" + mean_y_value);
+				MyLog.w(TAG + "meanValue:", "" + mean_z_value);
+				MyLog.w(TAG + "n_variance:Value", "" + n_variance_x_value);
+				MyLog.w(TAG + "n_varianceValue:", "" + n_variance_y_value);
+				MyLog.w(TAG + "n_varianceValue:", "" + n_variance_z_value);
+				MyLog.w(TAG + "standar_deviationValue:", "" + standard_deviation_x_value);
+				MyLog.w(TAG + "standar_deviationValue:", "" + standard_deviation_y_value);
+				MyLog.w(TAG + "standar_deviationValue:", "" + standard_deviation_z_value);
+				MyLog.w(TAG + "kurtosisValue:", "" + kurtosis_x_value);
+				MyLog.w(TAG + "kurtosisValue:", "" + kurtosis_y_value);
+				MyLog.w(TAG + "kurtosisValue:", "" + kurtosis_z_value);
+				MyLog.w(TAG + "correlationValue:", "" + correlation_x_y_value);
+				MyLog.w(TAG + "correlationValue:", "" + correlation_y_z_value);
+				MyLog.w(TAG + "correlationValue:", "" + correlation_z_x_value);
 			}
 		}
 		
 		public boolean correlation(){
 			if(HeadWear.DEBUG){
-				Log.w(TAG,"method: correlation");
+				MyLog.w(TAG,"method: correlation");
 			}
 			float d_x = 0f;
 			float d_y = 0f;
@@ -154,7 +154,7 @@ class MyDatas{
 		
 		public boolean kurtosis(){
 			if(HeadWear.DEBUG){
-				Log.w(TAG,"kurtosis");
+				MyLog.w(TAG,"kurtosis");
 			}
 			for(int i = 0; i < LEN_OF_SIGNAL_DATA; i++){
 				kurtosis_x_value += Math.pow((data_x.get(i) - mean_x_value),4);
@@ -169,7 +169,7 @@ class MyDatas{
 		
 		public boolean skewness(){
 			if(HeadWear.DEBUG){
-				Log.w(TAG,"skewness");
+				MyLog.w(TAG,"skewness");
 			}
 			for(int i = 0; i < LEN_OF_SIGNAL_DATA; i++){
 				skewness_x_value += Math.pow((data_x.get(i) - mean_x_value),3);
@@ -183,7 +183,7 @@ class MyDatas{
 		}
 		
 		public boolean standardDeviation(){
-			Log.w(TAG,"standardDeviation");
+			MyLog.w(TAG,"standardDeviation");
 			standard_deviation_x_value = (float) Math.sqrt(n_variance_x_value / LEN_OF_SIGNAL_DATA);
 			standard_deviation_y_value = (float) Math.sqrt(n_variance_y_value / LEN_OF_SIGNAL_DATA);
 			standard_deviation_z_value = (float) Math.sqrt(n_variance_z_value / LEN_OF_SIGNAL_DATA);
@@ -191,7 +191,7 @@ class MyDatas{
 		}
 		
 		public boolean sum(){
-			Log.w(TAG,"sum");
+			MyLog.w(TAG,"sum");
 			if(len == LEN_OF_SIGNAL_DATA){
 				for(int i = 0; i < LEN_OF_SIGNAL_DATA; i++){
 					total_x_value += data_x.get(i);
@@ -205,7 +205,7 @@ class MyDatas{
 		}
 		
 		public boolean meanValue(){
-			Log.w(TAG,"meanValue");
+			MyLog.w(TAG,"meanValue");
 			if(len == LEN_OF_SIGNAL_DATA){
 				mean_x_value = total_x_value / LEN_OF_SIGNAL_DATA;
 				mean_y_value = total_y_value / LEN_OF_SIGNAL_DATA;
@@ -217,7 +217,7 @@ class MyDatas{
 		}
 		
 		public boolean nVariance(){
-			Log.w(TAG,"nVariance");
+			MyLog.w(TAG,"nVariance");
 			for(int i = 0; i < LEN_OF_SIGNAL_DATA; i++){
 				n_variance_x_value += Math.pow((data_x.get(i) - mean_x_value),2);
 				n_variance_y_value += Math.pow((data_y.get(i) - mean_y_value),2);
@@ -225,19 +225,40 @@ class MyDatas{
 			}
 			return true;
 		}
+	
+		public float[] feature2list(){
+			float[] f = new float[12];
+			f[0] = standard_deviation_x_value;
+			f[1] = standard_deviation_y_value;
+			f[2] = standard_deviation_z_value;
+			f[3] = skewness_x_value;
+			f[4] = skewness_y_value;
+			f[5] = skewness_z_value;
+			f[6] = kurtosis_x_value;
+			f[7] = kurtosis_y_value;
+			f[8] = kurtosis_z_value;
+			f[9] = correlation_x_y_value;
+			f[10] = correlation_y_z_value;
+			f[11] = correlation_z_x_value;
+			String s = "";
+			for(int i = 0; i < 12; i++){
+				s += "f[" + i + "]:" + f[i] + " &";
+			}
+			MyLog.i("MyDatas.feature2list",s);
+			return null;
+		}
 	}
 	
 	public svm_problem returnSvmProblem(double[] label, float[][] datas){
 		
 		svm_node[][] mSvmDatas = new svm_node[datas.length][datas[0].length];
-		if(mSvmDatas == null)
-			Log.e("returnSvmPrmblem","datas.len:" + datas.length + " datas[0].len:" + datas[0].length + " " );
+
 		svm_problem problem = new svm_problem();
 		int i = 0, j = 0;
 		for(float[] datas_2 : datas){
 			j = 0;
 			for(float datas_3 : datas_2){
-				//Log.e("returnSvmProblem","i:" + i + " j:" + j + " index:" + mSvmDatas[i][j].index);
+				//MyLog.e("returnSvmProblem","i:" + i + " j:" + j + " index:" + mSvmDatas[i][j].index);
 				mSvmDatas[i][j] = new svm_node();
 				mSvmDatas[i][j].index = j;
 				mSvmDatas[i][j].value = datas_3;

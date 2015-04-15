@@ -43,19 +43,19 @@ public class DataHandlerService extends Service{
 			}).start();
 		}
 		if(!path.exists()){
-			if(path.mkdirs())Log.w(TAG,"mkdir succ");
-			else Log.w(TAG,"mkdir fail");
-			if(Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED))Log.w(TAG,"storagestate equal");
+			if(path.mkdirs())MyLog.w(TAG,"mkdir succ");
+			else MyLog.w(TAG,"mkdir fail");
+			if(Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED))MyLog.w(TAG,"storagestate equal");
 			File f = new File("/sdcard");
-			if(f.isDirectory())Log.w(TAG,"/sdcard id directory");
+			if(f.isDirectory())MyLog.w(TAG,"/sdcard id directory");
 			f = new File("/sdcard/");
-			if(f.isDirectory())Log.w(TAG,"/sdcard/ id directory");
+			if(f.isDirectory())MyLog.w(TAG,"/sdcard/ id directory");
 		}
 		if(!file.exists()){
 			try{
 				file.createNewFile();
 			}catch(IOException e){
-				Log.w(TAG,"createNewFile error.");
+				MyLog.w(TAG,"createNewFile error.");
 				e.printStackTrace();
 			}
 		}
@@ -111,7 +111,7 @@ public class DataHandlerService extends Service{
 	
 	public void saveData(String data){
 		String sql = "insert into acceleration_data(data, recv_time) values('" + data + "'," + System.currentTimeMillis() + ")";
-		Log.w(TAG,sql);
+		MyLog.w(TAG,sql);
 		sqlitedb.execSQL(sql);
 	}
 	
@@ -119,7 +119,7 @@ public class DataHandlerService extends Service{
 	MyDatas.SignalData sd2 = new MyDatas().new SignalData();
 	
 	public void dataHandler(String data){
-		//Log.w(TAG,"dataHandler");
+		//MyLog.w(TAG,"dataHandler");
 		//saveData(data);
 		float[] x = new float[LEN_OF_RECEIVED_DATA];
 		float[] y = new float[LEN_OF_RECEIVED_DATA];
@@ -127,18 +127,18 @@ public class DataHandlerService extends Service{
 		int d = 0;
 		for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
 			d = 6 * i;
-			Log.i("dataHandler : d : ", "" + d + " data:" + data);
+			MyLog.i("dataHandler : d : ", "" + d + " data:" + data);
 			x[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
 			y[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
 			z[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
 		}
 //		String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
 //		data_signal = data.split("&");
-//		//if(DEBUG)Log.w(TAG,"dataHandler data: " + data);
+//		//if(DEBUG)MyLog.w(TAG,"dataHandler data: " + data);
 //		BitSet bit = new BitSet(100);
 //		bit.set(1);
 //		for(int i = 0; i < LEN_OF_RECEIVED_DATA; i++){
-//			//Log.w(TAG,data_signal[i]);
+//			//MyLog.w(TAG,data_signal[i]);
 //			x[i] = (float)Double.parseDouble(data_signal[i].split("d")[0]);
 //			y[i] = (float)Double.parseDouble(data_signal[i].split("d")[1]);
 //			z[i] = (float)Double.parseDouble(data_signal[i].split("d")[2]);
@@ -149,7 +149,7 @@ public class DataHandlerService extends Service{
 //			sd1.used = true;
 //			if(sd1.used){
 //				sd1.enData(x[i],y[i],z[i]);
-//				//Log.w("test",""+sd1.len);
+//				//MyLog.w("test",""+sd1.len);
 //				if(sd1.len == MyDatas.LEN_OF_SIGNAL_DATA){
 //					sd1.calculate();
 //					sd1.resetDatas();
@@ -182,7 +182,7 @@ public class DataHandlerService extends Service{
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		if(DEBUG)Log.w(TAG,"onBind");
+		if(DEBUG)MyLog.w(TAG,"onBind");
 		return mBinder;
 	}
 	

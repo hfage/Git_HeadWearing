@@ -111,7 +111,7 @@ public class BLEDevice extends ListActivity {
     @Override
     protected void onDestroy(){
         super.onDestroy();
-        Log.i("test","BLEDevice onDestroy");
+        MyLog.i("test","BLEDevice onDestroy");
         //unbindService(mServiceConnection);
     }
 
@@ -145,7 +145,7 @@ public class BLEDevice extends ListActivity {
         intent.putExtra(BLE_DEVICE_ADDRESS, device.getAddress());
         sendBroadcast(intent);
         if(DEBUG){
-        	Log.i(TAG,"sentBroadcast");
+        	MyLog.i(TAG,"sentBroadcast");
         }
         if (mScanning) {
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
