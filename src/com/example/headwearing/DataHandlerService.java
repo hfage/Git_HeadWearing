@@ -43,13 +43,13 @@ public class DataHandlerService extends Service{
 			}).start();
 		}
 		if(!path.exists()){
-			if(path.mkdirs())MyLog.w(TAG,"mkdir succ");
-			else MyLog.w(TAG,"mkdir fail");
-			if(Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED))MyLog.w(TAG,"storagestate equal");
-			File f = new File("/sdcard");
-			if(f.isDirectory())MyLog.w(TAG,"/sdcard id directory");
-			f = new File("/sdcard/");
-			if(f.isDirectory())MyLog.w(TAG,"/sdcard/ id directory");
+			if(path.mkdirs()){
+				MyLog.w(TAG,"mkdir succ");
+			}
+			else {
+				MyLog.w(TAG,"mkdir fail");
+				return false;
+			}
 		}
 		if(!file.exists()){
 			try{
@@ -57,10 +57,11 @@ public class DataHandlerService extends Service{
 			}catch(IOException e){
 				MyLog.w(TAG,"createNewFile error.");
 				e.printStackTrace();
+				return false;
 			}
 		}
 		sqlitedb = SQLiteDatabase.openOrCreateDatabase(file, null);
-		sqlitedb.execSQL("CREATE table if not exists acceleration_data (id INTEGER PRIMARY KEY AUTOINCREMENT, data text, recv_time long)");
+		sqlitedb.execSQL("CREATE table if not exists acceleration_data (id INTEGER PRIMARY KEY AUTOINCREMENT, label int, data text, recv_time long)");
 		sqlitedb.execSQL("delete from acceleration_data where id > 1");
 		return true;
 	}
@@ -124,45 +125,49 @@ public class DataHandlerService extends Service{
 		float[] x = new float[LEN_OF_RECEIVED_DATA];
 		float[] y = new float[LEN_OF_RECEIVED_DATA];
 		float[] z = new float[LEN_OF_RECEIVED_DATA];
-		int d = 0;
-		for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
-			d = 6 * i;
-			MyLog.i("dataHandler : d : ", "" + d + " data:" + data);
-			x[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
-			y[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
-			z[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
+		boolean simulation = true;
+		if(simulation){
+			int d = 0;
+			for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
+				d = 6 * i;
+				MyLog.i("dataHandler : d : ", "" + d + " data:" + data);
+				x[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
+				y[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
+				z[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
+			}
+		}else{
+			String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
+			data_signal = data.split("&");
+			//if(DEBUG)MyLog.w(TAG,"dataHandler data: " + data);
+			BitSet bit = new BitSet(100);
+			bit.set(1);
+			for(int i = 0; i < LEN_OF_RECEIVED_DATA; i++){
+				//MyLog.w(TAG,data_signal[i]);
+				x[i] = (float)Double.parseDouble(data_signal[i].split("d")[0]);
+				y[i] = (float)Double.parseDouble(data_signal[i].split("d")[1]);
+				z[i] = (float)Double.parseDouble(data_signal[i].split("d")[2]);
+				
+				if(sd1.len == MyDatas.HALF_OF_SIGNAL_DATA){
+					sd2.used = true;
+				}
+				sd1.used = true;
+				if(sd1.used){
+					sd1.enData(x[i],y[i],z[i]);
+					//MyLog.w("test",""+sd1.len);
+					if(sd1.len == MyDatas.LEN_OF_SIGNAL_DATA){
+						sd1.calculate();
+						sd1.resetDatas();
+					}
+				}
+				if(sd2.used){
+					sd2.enData(x[i],y[i],z[i]);
+					if(sd2.len == MyDatas.LEN_OF_SIGNAL_DATA){
+						sd2.calculate();
+						sd2.resetDatas();
+					}
+				}
+			}
 		}
-//		String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
-//		data_signal = data.split("&");
-//		//if(DEBUG)MyLog.w(TAG,"dataHandler data: " + data);
-//		BitSet bit = new BitSet(100);
-//		bit.set(1);
-//		for(int i = 0; i < LEN_OF_RECEIVED_DATA; i++){
-//			//MyLog.w(TAG,data_signal[i]);
-//			x[i] = (float)Double.parseDouble(data_signal[i].split("d")[0]);
-//			y[i] = (float)Double.parseDouble(data_signal[i].split("d")[1]);
-//			z[i] = (float)Double.parseDouble(data_signal[i].split("d")[2]);
-//			
-//			if(sd1.len == MyDatas.HALF_OF_SIGNAL_DATA){
-//				sd2.used = true;
-//			}
-//			sd1.used = true;
-//			if(sd1.used){
-//				sd1.enData(x[i],y[i],z[i]);
-//				//MyLog.w("test",""+sd1.len);
-//				if(sd1.len == MyDatas.LEN_OF_SIGNAL_DATA){
-//					sd1.calculate();
-//					sd1.resetDatas();
-//				}
-//			}
-//			if(sd2.used){
-//				sd2.enData(x[i],y[i],z[i]);
-//				if(sd2.len == MyDatas.LEN_OF_SIGNAL_DATA){
-//					sd2.calculate();
-//					sd2.resetDatas();
-//				}
-//			}
-//		}
 		if(HeadWear.viewAcceleration){
 			Intent intent = new Intent(HeadWear.DRAW_BARCHART);
 			intent.putExtra("X", x);

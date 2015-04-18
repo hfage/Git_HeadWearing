@@ -20,7 +20,7 @@
             android:id="@+id/service_index"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Servie:"
+            android:text="S:"
             android:textSize="18sp" />
 
         <Spinner
@@ -32,10 +32,21 @@
             android:id="@+id/characteristic_index"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Characteristic:"
+            android:text="C:"
             android:textSize="18sp" />
         <Spinner
             android:id="@+id/spinner_characteristic"
+            android:layout_width="100sp"
+            android:layout_height="wrap_content" >
+        </Spinner>
+        <TextView
+            android:id="@+id/label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="L:"
+            android:textSize="18sp" />
+        <Spinner
+            android:id="@+id/spinner_label"
             android:layout_width="100sp"
             android:layout_height="wrap_content" >
         </Spinner>

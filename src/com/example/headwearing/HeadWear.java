@@ -88,6 +88,9 @@ public class HeadWear extends Activity {
 	private ArrayAdapter spinner_service_adapter;
 	private Spinner spinner_characteristic;
 	private ArrayAdapter spinner_characteristic_adapter;
+	private Spinner spinner_label;
+	private ArrayAdapter spinner_label_adapter;
+	public static int label = 0;
 	
 	//定义的一些全局变量
 	public int service_index = 0;
@@ -114,23 +117,30 @@ public class HeadWear extends Activity {
 		button4.setOnClickListener(new ClickEvent());
 		spinner_service = (Spinner) findViewById(R.id.spinner_service);
 		spinner_characteristic = (Spinner) findViewById(R.id.spinner_characteristic);
+		spinner_label = (Spinner) findViewById(R.id.spinner_label);
 		String[] service_string = new String[9];
 		String[] characteristic_string = new String[9];
+		String[] label_string = new String[9];
 		for(int i = 0; i < 9; i++){
 			service_string[i] = String.valueOf(i);
 			characteristic_string[i] = String.valueOf(i);
+			label_string[i] = String.valueOf(i);
 		}
 		spinner_service_adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,service_string);
 		spinner_service_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner_characteristic_adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,characteristic_string);
 		spinner_characteristic_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner_label_adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,label_string);
+		spinner_label_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner_service.setAdapter(spinner_service_adapter);
 		spinner_characteristic.setAdapter(spinner_characteristic_adapter);
+		spinner_label.setAdapter(spinner_label_adapter);
 		spinner_service.setVisibility(View.VISIBLE);
 		spinner_characteristic.setVisibility(View.VISIBLE);
+		spinner_label.setVisibility(View.VISIBLE);
 		spinner_service.setOnItemSelectedListener(new SpinnerServiceListener());
 		spinner_characteristic.setOnItemSelectedListener(new SpinnerCharacteristicListener());
-		
+		spinner_label.setOnItemSelectedListener(new SpinnerLabelListener());
 		
 		mBarChart = (BarChart) findViewById(R.id.barchart);
 		if(viewAcceleration){
@@ -235,6 +245,23 @@ public class HeadWear extends Activity {
 		
 	}
 	
+	class SpinnerLabelListener implements OnItemSelectedListener{
+
+		@Override
+		public void onItemSelected(AdapterView<?> parent, View view,
+				int position, long id) {
+			//tv.setText("spinner_service click position : " + position);
+			label = position;
+		}
+
+		@Override
+		public void onNothingSelected(AdapterView<?> parent) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+
 	class ClickEvent implements OnClickListener{
 
 		@Override
@@ -453,11 +480,11 @@ public class HeadWear extends Activity {
 		switch(id){
 			case R.id.menu_scan:{
 				if(!mBLEDeviceConnected){
-					boolean inTest = false;
+					boolean inTest = true;
 					if(inTest){
 						Intent sendIntent = new Intent(BLEDevice.BLE_CONNECT_DEVICE);
 						sendIntent.putExtra(BLEDevice.BLE_DEVICE_NAME, "a");
-						sendIntent.putExtra(BLEDevice.BLE_DEVICE_ADDRESS, "a");
+						sendIntent.putExtra(BLEDevice.BLE_DEVICE_ADDRESS, "11:11:11:11:11:11");
 						sendBroadcast(sendIntent);
 					}else{
 						Intent intent = new Intent(this,BLEDevice.class);
@@ -557,6 +584,7 @@ public class HeadWear extends Activity {
         	mDataHandlerService = ((DataHandlerService.LocalBinder) service).getService();
             MyLog.i("test","HeadWear onServiceConnected mDataHandlerServiceConnection");
             if(!mDataHandlerService.init()){
+            	tv.setText("DataHandlerService cannot innit. Maybe you should disconnect your USB.");
             	unbindService(mDataHandlerServiceConnection);
             }
         }
