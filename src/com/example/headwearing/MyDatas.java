@@ -249,6 +249,21 @@ class MyDatas{
 		}
 	}
 	
+	public class NeuralNetwork{
+		//神经网络定义为2层，每层10个单元加一个bias
+		//输入层有12个参数加一个bias
+		//输出层向量为5
+		public static final int hidden_layer_num = 2;
+		public static final int layer1_num = 12;
+		public static final int layer2_num = 10;
+		public static final int layer3_num = 10;
+		public static final int layer4_num = 5;
+		public float[][] W1 = new float[layer1_num + 1][layer2_num];
+		public float[][] W2 = new float[layer2_num + 1][layer3_num];
+		public float[][] W3 = new float[layer3_num + 1][layer4_num];
+		
+	}
+
 	public svm_problem returnSvmProblem(double[] label, float[][] datas){
 		
 		svm_node[][] mSvmDatas = new svm_node[datas.length][datas[0].length];

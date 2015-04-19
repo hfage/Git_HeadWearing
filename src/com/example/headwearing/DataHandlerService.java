@@ -38,7 +38,7 @@ public class DataHandlerService extends Service{
 			new Thread(new Runnable() {                    
 				@Override
 				public void run() {
-					//dataSimulation();
+					dataSimulation();
 				}
 			}).start();
 		}
@@ -111,9 +111,11 @@ public class DataHandlerService extends Service{
 	}
 	
 	public void saveData(String data){
-		String sql = "insert into acceleration_data(data, recv_time) values('" + data + "'," + System.currentTimeMillis() + ")";
-		MyLog.w(TAG,sql);
-		sqlitedb.execSQL(sql);
+		if(HeadWear.label <= 5 && HeadWear.label >= 1){
+			String sql = "insert into acceleration_data(label, data, recv_time) values("+ HeadWear.label +",'" + data + "'," + System.currentTimeMillis() + ")";
+			MyLog.w(TAG,sql);
+			sqlitedb.execSQL(sql);
+		}
 	}
 	
 	MyDatas.SignalData sd1 = new MyDatas().new SignalData();
@@ -126,7 +128,7 @@ public class DataHandlerService extends Service{
 		float[] y = new float[LEN_OF_RECEIVED_DATA];
 		float[] z = new float[LEN_OF_RECEIVED_DATA];
 		boolean simulation = true;
-		if(simulation){
+		if(!simulation){
 			int d = 0;
 			for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
 				d = 6 * i;
@@ -146,7 +148,6 @@ public class DataHandlerService extends Service{
 				x[i] = (float)Double.parseDouble(data_signal[i].split("d")[0]);
 				y[i] = (float)Double.parseDouble(data_signal[i].split("d")[1]);
 				z[i] = (float)Double.parseDouble(data_signal[i].split("d")[2]);
-				
 				if(sd1.len == MyDatas.HALF_OF_SIGNAL_DATA){
 					sd2.used = true;
 				}
