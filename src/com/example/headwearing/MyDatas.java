@@ -250,17 +250,27 @@ class MyDatas{
 	}
 	
 	public class NeuralNetwork{
-		//神经网络定义为2层，每层10个单元加一个bias
+		//神经网络定义为3层，每层10个单元加一个bias
 		//输入层有12个参数加一个bias
+		//一个中间层，为10
 		//输出层向量为5
 		public static final int hidden_layer_num = 2;
 		public static final int layer1_num = 12;
 		public static final int layer2_num = 10;
-		public static final int layer3_num = 10;
-		public static final int layer4_num = 5;
-		public float[][] W1 = new float[layer1_num + 1][layer2_num];
-		public float[][] W2 = new float[layer2_num + 1][layer3_num];
-		public float[][] W3 = new float[layer3_num + 1][layer4_num];
+		public static final int layer3_num = 5; //10;
+		//public static final int layer4_num = 5;
+		public float[][] W1, gradW1 = new float[layer1_num][layer2_num];
+		public float[] b1, z2, a2 = new float[layer2_num];
+		public float[][] W2, gradW2 = new float[layer2_num][layer3_num];
+		public float[] b2, z3, a3 = new float[layer3_num];
+		//public float[][] W3, gradW3 = new float[layer3_num + 1][layer4_num];
+		
+		public void init(){
+//			W1, gradW1 = new float[layer1_num][layer2_num];
+//			b1 = new float[layer2_num];
+//			W2, gradW2 = new float[layer2_num][layer3_num];
+//			b2 = new float[layer3_num];
+		}
 		
 	}
 
