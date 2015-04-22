@@ -1,6 +1,7 @@
 package com.example.headwearing;
 
 import java.util.ArrayList;
+
 import android.util.Log;
 import libsvm.svm_problem;
 import libsvm.svm_parameter;
@@ -259,10 +260,12 @@ class MyDatas{
 		public static final int layer2_num = 10;
 		public static final int layer3_num = 5; //10;
 		//public static final int layer4_num = 5;
+		public static final float lambda = 0.01f;
+		public float[] input_x = new float[layer1_num];
 		public float[][] W1, gradW1 = new float[layer1_num][layer2_num];
 		public float[] b1, z2, a2 = new float[layer2_num];
 		public float[][] W2, gradW2 = new float[layer2_num][layer3_num];
-		public float[] b2, z3, a3 = new float[layer3_num];
+		public float[] b2, z3, a3, h, input_y = new float[layer3_num];
 		//public float[][] W3, gradW3 = new float[layer3_num + 1][layer4_num];
 		
 		public void init(){
@@ -272,6 +275,58 @@ class MyDatas{
 //			b2 = new float[layer3_num];
 		}
 		
+		public void begin(){
+			
+		}
+		
+		public void costFunction(){
+			float cost = 0f;
+			float tmp1 = 0f;
+			//for(int i = 0; i < )
+		}
+		
+		public void forword(){
+			z2 = calculateZ(W1, input_x, b1);
+			a2 = calculateA(z2);
+			z3 = calculateZ(W2, a2, b2);
+			a3 = calculateA(z3);
+			h = a3;
+		}
+		
+		public float[] calculateZ(float[][] W, float[] x, float[] b){
+			float[] Z = new float[b.length];
+			for(int i = 0; i < x.length; i++){
+				for(int j = 0; j < b.length; j++){
+					Z[j] = W[i][j] * x[i] + b[j];
+				}
+			}
+			return Z;
+		}
+		
+		public float[] calculateA(float[] Z){
+			float[] A = new float[Z.length];
+			A = sigmod(Z);
+			return A;
+		}
+		
+		public float[] sigmod(float[] z){
+			float[] z_sigmod = new float[z.length];
+			for(int i = 0; i < z.length; i++)
+			{
+				z_sigmod[i] = (float) (1.0 / (1.0 + Math.exp(-z[i])));
+			}
+			return z_sigmod;
+		}
+		
+		public float[] sigmodGradient(float[] z){
+			float[] s = sigmod(z);
+			float[] g = new float[z.length];
+			for(int i = 0; i < z.length; i++){
+				g[i] = (s[i] * (1.0f - s[i]));
+			}
+			return g;
+			
+		}
 	}
 
 	public svm_problem returnSvmProblem(double[] label, float[][] datas){
