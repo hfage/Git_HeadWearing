@@ -7,10 +7,6 @@ import libsvm.svm_problem;
 import libsvm.svm_parameter;
 import libsvm.svm_node;
 
-
-
-
-
 class MyDatas{
 	public static int LEN_OF_SIGNAL_DATA = 512;
 	public static int HALF_OF_SIGNAL_DATA = LEN_OF_SIGNAL_DATA / 2;
@@ -260,12 +256,12 @@ class MyDatas{
 		public static final int layer2_num = 10;
 		public static final int layer3_num = 5; //10;
 		//public static final int layer4_num = 5;
-		public static final float lambda = 0.01f;
-		public float[] input_x = new float[layer1_num];
+		public static final float lambda = 0.01f, alpha = 0.01f;
+		public float[][] input_x, input_y;
 		public float[][] W1, gradW1 = new float[layer1_num][layer2_num];
-		public float[] b1, z2, a2 = new float[layer2_num];
+		public float[] b1, z2, a2, delta2, gradb1 = new float[layer2_num];
 		public float[][] W2, gradW2 = new float[layer2_num][layer3_num];
-		public float[] b2, z3, a3, h, input_y = new float[layer3_num];
+		public float[] b2, z3, a3, h, delta3, gradb2 = new float[layer3_num];
 		//public float[][] W3, gradW3 = new float[layer3_num + 1][layer4_num];
 		
 		public void init(){
@@ -279,18 +275,132 @@ class MyDatas{
 			
 		}
 		
-		public void costFunction(){
+		public float costFunction(){
 			float cost = 0f;
-			float tmp1 = 0f;
-			//for(int i = 0; i < )
+			int m = input_x.length;
+			float[][] deltaW1 = new float[layer1_num][layer2_num];
+			float[][] deltaW2 = new float[layer2_num][layer3_num];
+			float[] deltab1 = new float[layer2_num];
+			float[]	deltab2 = new float[layer3_num];
+			for(int i = 0; i < m; i++){
+				forward(input_x[i]);
+				backward(input_x[i], input_y[i]);
+				deltaW1 = metricPlus(deltaW1, gradW1);
+				deltaW2 = metricPlus(deltaW2, gradW2);
+				deltab1 = vectorPlus(deltab1, gradb1);
+				deltab2 = vectorPlus(deltab2, gradb2);
+				for(int j = 0; j < h.length; j++){
+					cost += (Math.pow((h[j] - input_y[i][j]),2) / 2.0f);
+				}
+			}
+			cost = cost / m;
+			cost += (lambda / 2.0f) * (calculateSquareW(W1) + calculateSquareW(W2));
+			W1 = updateW(W1, deltaW1, m);
+			W2 = updateW(W2, deltaW2, m);
+			b1 = updateB(b1, deltab1, m);
+			b2 = updateB(b2, deltab2, m);
+			return cost;
 		}
 		
-		public void forword(){
-			z2 = calculateZ(W1, input_x, b1);
+		public float[][] updateW(float[][] A, float[][] B, int m){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = A[i][j] - alpha * ((1f / m) * B[i][j] + lambda * A[i][j]);
+				}
+			}
+			return C;
+		}
+		
+		public float[] updateB(float[] A, float[] B, int m){
+			float[] C = new float[A.length];
+			for(int i = 0; i < A.length; i++){
+				C[i] = A[i] - alpha * ((1f / m) * B[i]);
+			}
+			return C;
+		}
+		
+		public float[][] metricPlus(float[][] A, float[][] B){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = A[i][j] + B[i][j];
+				}
+			}
+			return C;
+		}
+		
+		public float[][] metricMinus(float[][] A, float[][] B){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = A[i][j] - B[i][j];
+				}
+			}
+			return C;
+		}
+		
+		public float[] vectorPlus(float[] A, float[] B){
+			float[] C = new float[A.length];
+			for(int i = 0; i < A.length; i++){
+				C[i] = A[i] + B[i];
+			}
+			return C;
+		}
+		
+		public float[] vectorMinus(float[] A, float[] B){
+			float[] C = new float[A.length];
+			for(int i = 0; i < A.length; i++){
+				C[i] = A[i] - B[i];
+			}
+			return C;
+		}
+		
+		public float calculateSquareW(float[][] W){
+			float tmp = 0f;
+			for(int i = 0; i < W.length; i++){
+				for(int j = 0; j < W[0].length; j++){
+					tmp += W[i][j] * W[i][j];
+				}
+			}
+			return tmp;
+		}
+		
+		public void forward(float[] x){
+			z2 = calculateZ(W1, x, b1);
 			a2 = calculateA(z2);
 			z3 = calculateZ(W2, a2, b2);
 			a3 = calculateA(z3);
 			h = a3;
+		}
+		
+		public void backward(float[] x, float[] y){
+			float[] sgz3 = sigmodGradient(z3);
+			float[] sgz2 = sigmodGradient(z2);
+			for(int i = 0; i < delta3.length; i++){
+				delta3[i] = -(y[i] - a3[i]) * sgz3[i];
+				gradb2[i] = delta3[i];
+			}
+			float[] w2_times_delta3 = new float[delta2.length];
+			for(int i = 0; i < delta2.length; i++){
+				for(int j = 0; j < delta3.length; j++){
+					w2_times_delta3[i] += W2[i][j];
+				}
+			}
+			for(int i = 0; i < delta2.length; i++){
+				delta2[i] = w2_times_delta3[i] * sgz2[i];
+				gradb1[i] = delta2[i];
+			}
+			for(int i = 0; i < layer2_num; i++){
+				for(int j = 0; j < layer3_num; j++){
+					gradW2[i][j] = delta3[j] * a2[i];
+				}
+			}
+			for(int i = 0; i < layer1_num; i++){
+				for(int j = 0; j < layer2_num; j++){
+					gradW1[i][j] = delta2[j] * x[i];
+				}
+			}
 		}
 		
 		public float[] calculateZ(float[][] W, float[] x, float[] b){
