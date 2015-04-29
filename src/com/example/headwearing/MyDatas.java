@@ -258,21 +258,118 @@ class MyDatas{
 		//public static final int layer4_num = 5;
 		public static final float lambda = 0.01f, alpha = 0.01f;
 		public float[][] input_x, input_y;
-		public float[][] W1, gradW1 = new float[layer1_num][layer2_num];
-		public float[] b1, z2, a2, delta2, gradb1 = new float[layer2_num];
-		public float[][] W2, gradW2 = new float[layer2_num][layer3_num];
-		public float[] b2, z3, a3, h, delta3, gradb2 = new float[layer3_num];
+		public float[][] W1, gradW1;// = new float[layer1_num][layer2_num];
+		public float[] b1, z2, a2, delta2, gradb1;// = new float[layer2_num];
+		public float[][] W2, gradW2;// = new float[layer2_num][layer3_num];
+		public float[] b2, z3, a3, h, delta3, gradb2;// = new float[layer3_num];
 		//public float[][] W3, gradW3 = new float[layer3_num + 1][layer4_num];
 		
 		public void init(){
-//			W1, gradW1 = new float[layer1_num][layer2_num];
-//			b1 = new float[layer2_num];
-//			W2, gradW2 = new float[layer2_num][layer3_num];
-//			b2 = new float[layer3_num];
+			W1 = new float[layer1_num][layer2_num];
+			gradW1 = new float[layer1_num][layer2_num];
+			b1 = new float[layer2_num];
+			z2 = new float[layer2_num];
+			a2 = new float[layer2_num];
+			delta2 = new float[layer2_num];
+			gradb1 = new float[layer2_num];
+			W2 = new float[layer2_num][layer3_num];
+			gradW2 = new float[layer2_num][layer3_num];
+			b2 = new float[layer3_num];
+			z3 = new float[layer3_num];
+			a3 = new float[layer3_num];
+			h = new float[layer3_num];
+			delta3 = new float[layer3_num];
+			gradb2 = new float[layer3_num];
+			for(int i = 0; i < layer2_num; i++){
+				for(int j = 0; j < layer1_num; j++){
+					W1[j][i] = (float) ((Math.random() - 0.5) * 0.1);
+				}
+				b1[i] = (float) ((Math.random() - 0.5) * 0.1);
+			}
+			for(int i = 0; i < layer3_num; i++){
+				for(int j = 0; j < layer2_num; j++){
+					W2[j][i] = (float) ((Math.random() - 0.5) * 0.1);
+				}
+				b2[i] = (float) ((Math.random() - 0.5) * 0.1);
+			}
 		}
 		
-		public void begin(){
-			
+		public void train(int iteration, float[][] input_xx, float[][] input_yy){
+			boolean D = true;
+			if(D){
+				initTestData();
+			}else{
+				input_x = input_xx;
+				input_y = input_yy;
+			}
+			float cost = 0f;
+			for(int i = 0; i < iteration; i++){
+				cost = costFunction();
+				MyLog.i("NeuralNetwork.begin","cost: " + cost);
+			}
+		}
+		
+		public void initTestData(){
+			//初始化测试数据，总共500个数据
+			float[][] test_x = new float[500][12];
+			float[][] test_y = new float[500][5];
+			//100个label为1的数据，向量在[1,1,1,1,1,1,1,1,1,1,1,1]附近
+			for(int i = 0; i < 100; i++){
+				for(int j = 0; j < 12; j++){
+					test_x[i][j] = 1 + (float) (Math.random() - 0.5);
+				}
+				test_y[i][0] = 1;
+				test_y[i][1] = 0;
+				test_y[i][2] = 0;
+				test_y[i][3] = 0;
+				test_y[i][4] = 0;
+			}
+			//100个label为2的数据，向量在[10,10,10,10,10,10,10,10,10,10,10,10]附近
+			for(int i = 100; i < 200; i++){
+				for(int j = 0; j < 12; j++){
+					test_x[i][j] = 10 + (float) (Math.random() - 0.5);
+				}
+				test_y[i][0] = 0;
+				test_y[i][1] = 1;
+				test_y[i][2] = 0;
+				test_y[i][3] = 0;
+				test_y[i][4] = 0;
+			}
+			//100个label为3的数据，向量在[100,100,100,100,100,100,100,100,100,100,100,100]附近
+			for(int i = 200; i < 300; i++){
+				for(int j = 0; j < 12; j++){
+					test_x[i][j] = 100 + (float) (Math.random() - 0.5);
+				}
+				test_y[i][0] = 0;
+				test_y[i][1] = 0;
+				test_y[i][2] = 1;
+				test_y[i][3] = 0;
+				test_y[i][4] = 0;
+			}
+			//100个label为4的数据，向量在[1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000]附近
+			for(int i = 300; i < 400; i++){
+				for(int j = 0; j < 12; j++){
+					test_x[i][j] = 1000 + (float) (Math.random() - 0.5);
+				}
+				test_y[i][0] = 0;
+				test_y[i][1] = 0;
+				test_y[i][2] = 0;
+				test_y[i][3] = 1;
+				test_y[i][4] = 0;
+			}
+			//100个label为5的数据，向量在[10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000]附近
+			for(int i = 400; i < 500; i++){
+				for(int j = 0; j < 12; j++){
+					test_x[i][j] = 10000 + (float) (Math.random() - 0.5);
+				}
+				test_y[i][0] = 0;
+				test_y[i][1] = 0;
+				test_y[i][2] = 0;
+				test_y[i][3] = 0;
+				test_y[i][4] = 1;
+			}
+			input_x = test_x;
+			input_y = test_y;
 		}
 		
 		public float costFunction(){
