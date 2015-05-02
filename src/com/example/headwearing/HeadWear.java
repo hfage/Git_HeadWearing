@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import libsvm.*;
 
+import com.example.headwearing.MyDatas.SignalData;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.BarData;
@@ -300,10 +301,10 @@ public class HeadWear extends Activity {
 				new Thread(new Runnable() {                    
 					@Override
 					public void run() {
-						socket_test();
+						//socket_test();
 					}
 				}).start();
-				
+				neural_test();
 				//String svm_test_result = svm_test();
 				//tv.setText("button2 onclick \n svm_result: " + svm_test_result);
 			}else{
@@ -410,6 +411,14 @@ public class HeadWear extends Activity {
 //		//return null;
 	}
 	
+	MyDatas.NeuralNetwork nn = new MyDatas().new NeuralNetwork();
+	public void neural_test(){
+		MyLog.d("HeadWear.neural_test","neural test");
+		float[][] a = new float[1][1];
+		nn.init();
+		nn.train(1000, a, a);
+	}
+
 	public void setBarChartData(float x, float y, float z){
 		MyLog.i("","" + x + y + z);
 		ArrayList<BarEntry> yVals = new ArrayList<BarEntry>();

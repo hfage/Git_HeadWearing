@@ -295,8 +295,8 @@ class MyDatas{
 		}
 		
 		public void train(int iteration, float[][] input_xx, float[][] input_yy){
-			boolean D = true;
-			if(D){
+			boolean inTest = true;
+			if(inTest){
 				initTestData();
 			}else{
 				input_x = input_xx;
@@ -313,10 +313,11 @@ class MyDatas{
 			//初始化测试数据，总共500个数据
 			float[][] test_x = new float[500][12];
 			float[][] test_y = new float[500][5];
+			float d = 3f;
 			//100个label为1的数据，向量在[1,1,1,1,1,1,1,1,1,1,1,1]附近
 			for(int i = 0; i < 100; i++){
 				for(int j = 0; j < 12; j++){
-					test_x[i][j] = 1 + (float) (Math.random() - 0.5);
+					test_x[i][j] = 1 + (float) (Math.random() - 0.5) * d;
 				}
 				test_y[i][0] = 1;
 				test_y[i][1] = 0;
@@ -327,7 +328,7 @@ class MyDatas{
 			//100个label为2的数据，向量在[10,10,10,10,10,10,10,10,10,10,10,10]附近
 			for(int i = 100; i < 200; i++){
 				for(int j = 0; j < 12; j++){
-					test_x[i][j] = 10 + (float) (Math.random() - 0.5);
+					test_x[i][j] = 10 + (float) (Math.random() - 0.5) * d;
 				}
 				test_y[i][0] = 0;
 				test_y[i][1] = 1;
@@ -338,7 +339,7 @@ class MyDatas{
 			//100个label为3的数据，向量在[100,100,100,100,100,100,100,100,100,100,100,100]附近
 			for(int i = 200; i < 300; i++){
 				for(int j = 0; j < 12; j++){
-					test_x[i][j] = 100 + (float) (Math.random() - 0.5);
+					test_x[i][j] = 100 + (float) (Math.random() - 0.5) * d;
 				}
 				test_y[i][0] = 0;
 				test_y[i][1] = 0;
@@ -349,7 +350,7 @@ class MyDatas{
 			//100个label为4的数据，向量在[1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000]附近
 			for(int i = 300; i < 400; i++){
 				for(int j = 0; j < 12; j++){
-					test_x[i][j] = 1000 + (float) (Math.random() - 0.5);
+					test_x[i][j] = 1000 + (float) (Math.random() - 0.5) * d;
 				}
 				test_y[i][0] = 0;
 				test_y[i][1] = 0;
@@ -360,7 +361,7 @@ class MyDatas{
 			//100个label为5的数据，向量在[10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000]附近
 			for(int i = 400; i < 500; i++){
 				for(int j = 0; j < 12; j++){
-					test_x[i][j] = 10000 + (float) (Math.random() - 0.5);
+					test_x[i][j] = 10000 + (float) (Math.random() - 0.5) * d;
 				}
 				test_y[i][0] = 0;
 				test_y[i][1] = 0;

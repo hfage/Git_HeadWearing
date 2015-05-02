@@ -123,11 +123,11 @@ public class DataHandlerService extends Service{
 	
 	public void dataHandler(String data){
 		//MyLog.w(TAG,"dataHandler");
-		//saveData(data);
+		saveData(data);
 		float[] x = new float[LEN_OF_RECEIVED_DATA];
 		float[] y = new float[LEN_OF_RECEIVED_DATA];
 		float[] z = new float[LEN_OF_RECEIVED_DATA];
-		boolean simulation = true;
+		boolean simulation = false;
 		if(!simulation){
 			int d = 0;
 			for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
@@ -136,6 +136,7 @@ public class DataHandlerService extends Service{
 				x[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
 				y[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
 				z[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
+				train(x[i], y[i], z[i]);
 			}
 		}else{
 			String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
@@ -175,6 +176,34 @@ public class DataHandlerService extends Service{
 			intent.putExtra("Y", y);
 			intent.putExtra("Z", z);
 			sendBroadcast(intent);
+		}
+	}
+	
+	//原始数据，用以计算特征值
+	MyDatas.SignalData data1 = new MyDatas().new SignalData();
+	MyDatas.SignalData data2 = new MyDatas().new SignalData();
+	public void train(float x, float y, float z){
+		//data1 走了半个窗长后才开始使用data2
+		if(data1.len == MyDatas.HALF_OF_SIGNAL_DATA){
+			data2.used = true;
+		}
+		data1.used = true;
+		if(data1.used){
+			data1.enData(x, y, z);
+			//MyLog.w("test",""+sd1.len);
+			if(data1.len == MyDatas.LEN_OF_SIGNAL_DATA){
+				data1.calculate();
+				data1.resetDatas();
+				data1.feature2list();
+			}
+		}
+		if(data2.used){
+			data2.enData(x, y, z);
+			if(data2.len == MyDatas.LEN_OF_SIGNAL_DATA){
+				data2.calculate();
+				data2.resetDatas();
+				data2.feature2list();
+			}
 		}
 	}
 	 
