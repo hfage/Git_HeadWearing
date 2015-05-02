@@ -38,7 +38,7 @@ public class DataHandlerService extends Service{
 			new Thread(new Runnable() {                    
 				@Override
 				public void run() {
-					dataSimulation();
+					//dataSimulation();
 				}
 			}).start();
 		}

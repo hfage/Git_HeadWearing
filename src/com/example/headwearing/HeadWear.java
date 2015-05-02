@@ -96,6 +96,9 @@ public class HeadWear extends Activity {
 	public int service_index = 0;
 	public int characteristic_index = 0;
 	
+	//
+	public MySocket mMySocket = new MySocket();
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -294,14 +297,35 @@ public class HeadWear extends Activity {
 				mBluetoothLeService.closeNotification();
 			}else if(v == button4){
 				MyLog.i("hello", "world");
-				String svm_test_result = svm_test();
-				tv.setText("button2 onclick \n svm_result: " + svm_test_result);
+				new Thread(new Runnable() {                    
+					@Override
+					public void run() {
+						socket_test();
+					}
+				}).start();
+				
+				//String svm_test_result = svm_test();
+				//tv.setText("button2 onclick \n svm_result: " + svm_test_result);
 			}else{
 				// 
 			}
 			
 		}
 		
+	}
+	
+	public void socket_test(){
+		
+		if(mMySocket.connect("192.168.1.100", 30001)){
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			mMySocket.sendMsg("12345678123456781234567812345678123456781234567812345678123456781234567812345678");
+			mMySocket.recvMsg();
+		}
 	}
 	
 	public String svm_test(){
@@ -480,7 +504,7 @@ public class HeadWear extends Activity {
 		switch(id){
 			case R.id.menu_scan:{
 				if(!mBLEDeviceConnected){
-					boolean inTest = true;
+					boolean inTest = false;
 					if(inTest){
 						Intent sendIntent = new Intent(BLEDevice.BLE_CONNECT_DEVICE);
 						sendIntent.putExtra(BLEDevice.BLE_DEVICE_NAME, "a");
@@ -526,7 +550,10 @@ public class HeadWear extends Activity {
                                 		try {
                                 			MyLog.i("unbindService", "unbind mBLEServiceConnection");
                                 			unbindService(mBLEServiceConnection);
-                        				} catch (Exception e) {
+                                			if(mMySocket.client.isConnected()){
+                                				mMySocket.closeSocket();
+                                			}
+                                		} catch (Exception e) {
                         					// TODO Auto-generated catch block
                         					e.printStackTrace();
                         				}
