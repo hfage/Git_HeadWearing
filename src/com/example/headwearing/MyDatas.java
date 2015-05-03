@@ -8,7 +8,7 @@ import libsvm.svm_parameter;
 import libsvm.svm_node;
 
 class MyDatas{
-	public static int LEN_OF_SIGNAL_DATA = 512;
+	public static int LEN_OF_SIGNAL_DATA = 100;
 	public static int HALF_OF_SIGNAL_DATA = LEN_OF_SIGNAL_DATA / 2;
 	public static String TAG = "MyDatas ";
 	public class SignalData{
@@ -100,6 +100,10 @@ class MyDatas{
 		
 		public void calculate(){
 			MyLog.w(TAG,"calculate");
+			if(data_x.size() != LEN_OF_SIGNAL_DATA){
+				MyLog.w("MyDatas.calculate", "size != LEN_OF_SIGNAL_DATA");
+				return;
+			}
 			using = true;
 			sum();
 			meanValue();

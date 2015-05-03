@@ -122,7 +122,7 @@ public class DataHandlerService extends Service{
 	MyDatas.SignalData sd2 = new MyDatas().new SignalData();
 	
 	public void dataHandler(String data){
-		//MyLog.w(TAG,"dataHandler");
+		MyLog.w(TAG,"dataHandler:" + data);
 		saveData(data);
 		float[] x = new float[LEN_OF_RECEIVED_DATA];
 		float[] y = new float[LEN_OF_RECEIVED_DATA];
@@ -189,20 +189,24 @@ public class DataHandlerService extends Service{
 		}
 		data1.used = true;
 		if(data1.used){
-			data1.enData(x, y, z);
-			//MyLog.w("test",""+sd1.len);
-			if(data1.len == MyDatas.LEN_OF_SIGNAL_DATA){
-				data1.calculate();
-				data1.resetDatas();
-				data1.feature2list();
+			if(!data1.using){
+				data1.enData(x, y, z);
+				//MyLog.w("test",""+sd1.len);
+				if(data1.len == MyDatas.LEN_OF_SIGNAL_DATA){
+					data1.calculate();
+					data1.resetDatas();
+					data1.feature2list();
+				}
 			}
 		}
 		if(data2.used){
-			data2.enData(x, y, z);
-			if(data2.len == MyDatas.LEN_OF_SIGNAL_DATA){
-				data2.calculate();
-				data2.resetDatas();
-				data2.feature2list();
+			if(!data2.using){
+				data2.enData(x, y, z);
+				if(data2.len == MyDatas.LEN_OF_SIGNAL_DATA){
+					data2.calculate();
+					data2.resetDatas();
+					data2.feature2list();
+				}
 			}
 		}
 	}
