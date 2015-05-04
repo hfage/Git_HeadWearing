@@ -132,7 +132,7 @@ public class DataHandlerService extends Service{
 			int d = 0;
 			for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
 				d = 6 * i;
-				MyLog.i("dataHandler : d : ", "" + d + " data:" + data);
+				
 				x[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
 				y[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
 				z[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
