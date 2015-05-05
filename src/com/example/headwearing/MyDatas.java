@@ -541,6 +541,152 @@ class MyDatas{
 		}
 	}
 
+	public class NeuralNetworkML{
+		public static final int layer1_num = 12;
+		public static final int layer2_num = 10;
+		public static final int layer3_num = 5;
+		public static final float lambda = 1f;
+		
+		public float[][] theta1, theta1_grad; // 13 * 10
+		public float[][] theta2, theta2_grad; // 11 * 5
+		public float[][] X; // m * 13, X[i][0] = 1
+		public float[][] y; // m * 5
+		
+		public void nnCostFunction(){
+			int m = X.length;
+			float J = 0;
+			float[][] a1 = X; // m * 13
+			float[][] z2 = metricTimes(a1, theta1); // a1 * theta1
+			float[][] a2 = sigmod(z2);
+			float[][] z3 = metricTimes(a2, theta2);
+			float[][] a3 = sigmod(z3);
+			float[][] h = z3;
+			J = (-1f / m) * sumMetric( metricPlus(metricDotTimes(y, logMetric(h)) , metricDotTimes(metricMinus(onesMetric(y),y), logMetric(metricMinus(onesMetric(h),h ))))  );
+			float[][] tmp_theta1 = new float[layer1_num][layer2_num];
+			for(int i = 0; i < layer1_num; i++){
+				for(int j = 0; j < layer2_num; j++){
+					tmp_theta1[i][j] = theta1[i+1][j];
+				}
+			}
+			float[][] tmp_theta2 = new float[layer2_num][layer3_num];
+			for(int i = 0; i < layer2_num; i++){
+				for(int j = 0; j < layer3_num; j++){
+					tmp_theta2[i][j] = theta2[i+1][j];
+				}
+			}
+			J += J + lambda / (2f * m) * (sumMetric(metricSquare(tmp_theta1)) + sumMetric(metricSquare(tmp_theta2)));
+		}
+		
+		public float[][] metricSquare(float[][] A){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = (float) Math.pow((A[i][j]),2);
+				}
+			}
+			return C;
+		}
+		
+		public float[][] logMetric(float[][] A){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = (float) Math.log(A[i][j]);
+				}
+			}
+			return C;
+		}
+		
+		public float sumMetric(float[][] A){
+			float sum = 0f;
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					sum += A[i][j];
+				}
+			}
+			return sum;
+		}
+		
+		public float[][] onesMetric(float[][] A){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = 1f;
+				}
+			}
+			return C;
+		}
+		
+		public float[][] metricPlus(float[][] A, float[][] B){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = A[i][j] + B[i][j];
+				}
+			}
+			return C;
+		}
+		
+		public float[][] metricMinus(float[][] A, float[][] B){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = A[i][j] - B[i][j];
+				}
+			}
+			return C;
+		}
+		
+		public float[][] metricTimes(float[][] A, float[][] B){
+			int A_row = A.length;
+			int A_col = A[0].length;
+			int B_row = B.length;
+			int B_col = B[0].length;
+			if(A_col != B_row){
+				MyLog.i("MyDatas.metricTimes", "Error. A_col != B.row");
+				return null;
+			}
+			float[][] C = new float[A_row][B_col];
+			for(int i = 0; i < A_row; i++){
+				for(int j = 0; j < B_col; j++){
+					for(int k = 0; k < A_col; k++){
+						C[i][j] += A[i][k] * B[k][j];
+					}
+				}
+			}
+			return C;
+		}
+		
+		public float[][] metricDotTimes(float[][] A, float[][] B){
+			int A_row = A.length;
+			int A_col = A[0].length;
+			int B_row = B.length;
+			int B_col = B[0].length;
+			if(A_row != B_row || A_col != B_col){
+				MyLog.i("MyDatas.metricTimes", "Error. A_row != B_row || A_col != B_col");
+				return null;
+			}
+			float[][] C = new float[A_row][B_col];
+			for(int i = 0; i < A_row; i++){
+				for(int j = 0; j < A_col; j++){
+					C[i][j] = A[i][j] * B[i][j];
+				}
+			}
+			return C;
+		}
+		
+		public float[][] sigmod(float[][] z){
+			float[][] z_sigmod = new float[z.length][z[0].length];
+			for(int i = 0; i < z.length; i++){
+				for(int j = 0; j < z[0].length; j++){
+					z_sigmod[i][j] = (float) (1.0 / (1.0 + Math.exp(-z[i][j])));
+				}
+			}
+			return z_sigmod;
+		}
+		
+	}
+
 	public svm_problem returnSvmProblem(double[] label, float[][] datas){
 		
 		svm_node[][] mSvmDatas = new svm_node[datas.length][datas[0].length];
