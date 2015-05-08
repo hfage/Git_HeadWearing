@@ -351,17 +351,95 @@ public class HeadWear extends Activity {
 		return result;
 	}
 	
-	MyDatas.NeuralNetwork nn = new MyDatas().new NeuralNetwork();
+	MyDatas.NeuralNetworkML nn = new MyDatas().new NeuralNetworkML();
 	public void neural_test(){
 		MyLog.d("HeadWear.neural_test","neural test");
+//		float[][] a = new float[1][1];
+//		nn.init();
+//		nn.train(200);
+//		float[] pred1 = {100,100,100,100,100,100,100,100,100,100};
+//		nn.forward(pred1);
+//		String s = "";
+//		for(int i = 0; i < nn.h.length; i++){
+//			s += "," + nn.h[i];
+//		}
 		float[][] a = new float[1][1];
 		nn.init();
-		nn.train(200, a, a);
-		float[] pred1 = {100,100,100,100,100,100,100,100,100,100};
-		nn.forward(pred1);
+		float[] test = {-10000f, -0.000005f, 0, 0.000005f, 100000f};
+		float[] sss = nn.sigmod(test);
+		String ss = "";
+		for(int i = 0; i < sss.length; i++){
+			ss += "," + sss[i];
+		}
+		tv.setText(ss);
+		nn.train(5000);
 		String s = "";
-		for(int i = 0; i < nn.h.length; i++){
-			s += "," + nn.h[i];
+		float[][] pred1 = new float[2][13];
+		
+		
+		for(int i = 0; i < 2; i++){
+			pred1[i][0] = 1;
+			for(int j = 1; j < 13; j++){
+				pred1[i][j] = j;
+			}
+		}
+		float[][] h = nn.predict(pred1);
+		s = "";
+		for(int i = 0; i < h[0].length; i++){
+			s += "," + h[0][i];
+		}
+		MyLog.i("Pred",  "Pred:" + s);
+		
+		
+		for(int i = 0; i < 2; i++){
+			pred1[i][0] = 1;
+			for(int j = 1; j < 13; j++){
+				pred1[i][j] = 13 - j;
+			}
+		}
+		h = nn.predict(pred1);
+		s = "";
+		for(int i = 0; i < h[0].length; i++){
+			s += "," + h[0][i];
+		}
+		MyLog.i("Pred",  "Pred:" + s);
+		
+		for(int i = 0; i < 2; i++){
+			pred1[i][0] = 1;
+			for(int j = 1; j < 13; j++){
+				pred1[i][j] = 100;
+			}
+		}
+		h = nn.predict(pred1);
+		s = "";
+		for(int i = 0; i < h[0].length; i++){
+			s += "," + h[0][i];
+		}
+		MyLog.i("Pred",  "Pred:" + s);
+		
+		for(int i = 0; i < 2; i++){
+			pred1[i][0] = 1;
+			for(int j = 1; j < 13; j++){
+				pred1[i][j] = (float) (Math.pow(-1,j) * j);
+			}
+		}
+		h = nn.predict(pred1);
+		s = "";
+		for(int i = 0; i < h[0].length; i++){
+			s += "," + h[0][i];
+		}
+		MyLog.i("Pred",  "Pred:" + s);
+		
+		for(int i = 0; i < 2; i++){
+			pred1[i][0] = 1;
+			for(int j = 1; j < 13; j++){
+				pred1[i][j] = (float) (Math.pow(2,j) * j);
+			}
+		}
+		h = nn.predict(pred1);
+		s = "";
+		for(int i = 0; i < h[0].length; i++){
+			s += "," + h[0][i];
 		}
 		MyLog.i("Pred",  "Pred:" + s);
 	}

@@ -546,35 +546,265 @@ class MyDatas{
 		public static final int layer2_num = 10;
 		public static final int layer3_num = 5;
 		public static final float lambda = 1f;
+		public float alpha = 0.01f;
 		
 		public float[][] theta1, theta1_grad; // 13 * 10
 		public float[][] theta2, theta2_grad; // 11 * 5
 		public float[][] X; // m * 13, X[i][0] = 1
 		public float[][] y; // m * 5
 		
+		public void init(){
+			theta1 = new float[layer1_num + 1][layer2_num];
+			theta1_grad = new float[layer1_num + 1][layer2_num];
+			theta2 = new float[layer2_num + 1][layer3_num];
+			theta2_grad = new float[layer2_num + 1][layer3_num];
+			for(int i = 0; i < layer1_num + 1; i++){
+				for(int j = 0; j < layer2_num ; j++){
+					theta1[i][j] = (float) ((Math.random() - 0.0) * 0.1);
+				}
+			}
+			for(int i = 0; i < layer2_num + 1; i++){
+				for(int j = 0; j < layer3_num ; j++){
+					theta2[i][j] = (float) ((Math.random() - 0.0) * 0.1);
+				}
+			}
+		}
+		
+		public void initTestData(){
+			//初始化测试数据，总共500个数据
+			float[][] test_x = new float[50][13];
+			float[][] test_y = new float[50][5];
+			float d = 3f;
+			//100个label为1的数据，向量在[1,1,1,1,1,1,1,1,1,1,1,1]附近
+			for(int i = 0; i < 10; i++){
+				for(int j = 1; j < 13; j++){
+					test_x[i][j] = j + (float) (Math.random() - 0.5) * d;
+				}
+				test_y[i][0] = 1;
+				test_y[i][1] = 0;
+				test_y[i][2] = 0;
+				test_y[i][3] = 0;
+				test_y[i][4] = 0;
+			}
+			//100个label为2的数据，向量在[10,10,10,10,10,10,10,10,10,10,10,10]附近
+			for(int i = 10; i < 20; i++){
+				for(int j = 1; j < 13; j++){
+					test_x[i][j] = (13-j) + (float) (Math.random() - 0.5) * d;
+				}
+				test_y[i][0] = 0;
+				test_y[i][1] = 1;
+				test_y[i][2] = 0;
+				test_y[i][3] = 0;
+				test_y[i][4] = 0;
+			}
+			//100个label为3的数据，向量在[100,100,100,100,100,100,100,100,100,100,100,100]附近
+			for(int i = 20; i < 30; i++){
+				for(int j = 1; j < 13; j++){
+					test_x[i][j] = 100 + (float) (Math.random() - 0.5) * d;
+				}
+				test_y[i][0] = 0;
+				test_y[i][1] = 0;
+				test_y[i][2] = 1;
+				test_y[i][3] = 0;
+				test_y[i][4] = 0;
+			}
+			//100个label为4的数据，向量在[1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000]附近
+			for(int i = 30; i < 40; i++){
+				for(int j = 1; j < 13; j++){
+					test_x[i][j] = (float) (Math.pow(-1,j) * j + (float) (Math.random() - 0.5) * d);
+				}
+				test_y[i][0] = 0;
+				test_y[i][1] = 0;
+				test_y[i][2] = 0;
+				test_y[i][3] = 1;
+				test_y[i][4] = 0;
+			}
+			//100个label为5的数据，向量在[10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000]附近
+			for(int i = 40; i < 50; i++){
+				for(int j = 1; j < 13; j++){
+					test_x[i][j] = (float) Math.pow(2, j) + (float) (Math.random() - 0.5) * d;
+				}
+				test_y[i][0] = 0;
+				test_y[i][1] = 0;
+				test_y[i][2] = 0;
+				test_y[i][3] = 0;
+				test_y[i][4] = 1;
+			}
+			for(int i = 0; i < 50; i++){
+				test_x[i][0] = 1;
+			}
+			X = test_x;
+			y = test_y;
+		}
+		
+		public void train(int iteration){
+			initTestData();
+			//view(y);
+			for(int i = 0; i < iteration; i++){
+				nnCostFunction();
+				if(iteration == 100)alpha = alpha / 10;
+				if(iteration == 500)alpha = alpha / 10;
+				if(iteration == 1500)alpha = alpha / 10;
+				theta2 = metricMinus(theta2, theta2_grad, alpha);
+				theta1 = metricMinus(theta1, theta1_grad, alpha);
+			}
+		}
+		
+		public float[][] predict(float[][] inputx){
+			float[][] a1 = inputx; // m * 13
+			float[][] z2 = metricTimes(a1, theta1); // a1 * theta1
+			float[][] a2_tmp = sigmod(z2); // m * 10
+			float[][] a2 = new float[2][layer2_num + 1]; //m * 11
+			for(int i = 0; i < 2; i++){
+				a2[i][0] = 1f;
+				for(int j = 1; j < layer2_num + 1; j++){
+					a2[i][j] = a2_tmp[i][j-1];
+				}
+			}
+			float[][] z3 = metricTimes(a2, theta2);
+			float[][] a3 = sigmod(z3);
+			float[][] h = a3;
+			return h;
+		}
+
 		public void nnCostFunction(){
 			int m = X.length;
 			float J = 0;
 			float[][] a1 = X; // m * 13
-			float[][] z2 = metricTimes(a1, theta1); // a1 * theta1
-			float[][] a2 = sigmod(z2);
-			float[][] z3 = metricTimes(a2, theta2);
-			float[][] a3 = sigmod(z3);
-			float[][] h = z3;
-			J = (-1f / m) * sumMetric( metricPlus(metricDotTimes(y, logMetric(h)) , metricDotTimes(metricMinus(onesMetric(y),y), logMetric(metricMinus(onesMetric(h),h ))))  );
+			float[][] z2 = metricTimes(a1, theta1); // m * 10
+			float[][] a2_tmp = sigmod(z2); // m * 10
+			float[][] a2 = new float[m][layer2_num + 1]; //m * 11
+			for(int i = 0; i < m; i++){
+				a2[i][0] = 1f;
+				for(int j = 1; j < layer2_num + 1; j++){
+					a2[i][j] = a2_tmp[i][j-1];
+				}
+			}
+			float[][] z3 = metricTimes(a2, theta2);  // m * 5
+			float[][] a3 = sigmod(z3); // m * 5
+			float[][] h = a3;
+			for(int i = 0; i < h.length; i++){
+				for(int j = 0; j < h[0].length; j++){
+					if(h[i][j] > 1f || h[i][j] < 0){
+						MyLog.e("ERROR", "error! h[i][j] > 1f || h[i][j] < 0 h:" + h[i][j]);
+					}
+				}
+			}
+//			view(h);
+//			MyLog.i("nnCostFunction", "costfunction J1: " + J);
+			float sum = sumMetric( metricPlus(metricDotTimes(y, logMetric(h)) , metricDotTimes(metricMinus(onesMetric(y),y), logMetric(metricMinus(onesMetric(h),h ))))  );
+			J = (-1f / m) * sum;
+			float a = 2.324234234f;
+			float b = 2.345f;
+//			MyLog.i("nnCostFunction", "sum:"+sum+"costfunction J2: " + J  +"a:" + a + "b:" + b);
 			float[][] tmp_theta1 = new float[layer1_num][layer2_num];
 			for(int i = 0; i < layer1_num; i++){
 				for(int j = 0; j < layer2_num; j++){
 					tmp_theta1[i][j] = theta1[i+1][j];
 				}
 			}
-			float[][] tmp_theta2 = new float[layer2_num][layer3_num];
+			float[][] tmp_theta2 = new float[layer2_num][layer3_num]; //10 * 5
 			for(int i = 0; i < layer2_num; i++){
 				for(int j = 0; j < layer3_num; j++){
 					tmp_theta2[i][j] = theta2[i+1][j];
 				}
 			}
 			J += J + lambda / (2f * m) * (sumMetric(metricSquare(tmp_theta1)) + sumMetric(metricSquare(tmp_theta2)));
+//			MyLog.i("nnCostFunction", "costfunction J3: " + J);
+			float[][] Delta1 = new float[layer1_num + 1][layer2_num]; // 13 * 10
+			float[][] Delta2 = new float[layer2_num + 1][layer3_num]; // 11 * 5
+			float[] delta3 = new float[layer3_num];//5  
+			float[] delta2 = new float[layer2_num];//10
+			for(int i = 0; i < m; i++){
+				delta3 = vectorMinus(a3[i], y[i]);
+				delta2 = vectorDotTimes(vectorTimesMetric(delta3, tmp_theta2), sigmodGradient(z2[i]));
+				Delta2 = metricPlus(Delta2, vectorTimesVector(a2[i], delta3));
+				Delta1 = metricPlus(Delta1, vectorTimesVector(a1[i], delta2));
+			}
+			theta2_grad = metricDevide(Delta2, m);
+			theta1_grad = metricDevide(Delta1, m);
+			for(int i = 0; i < theta1_grad.length; i++){
+				for(int j = 1; j < theta1_grad[0].length; j++){
+					theta1_grad[i][j] = theta1_grad[i][j] + lambda * theta1[i][j] / m; 
+				}
+			}
+			for(int i = 0; i < theta2_grad.length; i++){
+				for(int j = 1; j < theta2_grad[0].length; j++){
+					theta2_grad[i][j] = theta2_grad[i][j] + lambda * theta2[i][j] / m; 
+				}
+			}
+			
+			MyLog.i("nnCostFunction", "costfunction J4: " + J);
+		}
+		
+		public float[][] metricMinus(float[][] A, float[][] B, float a){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = A[i][j] - a * B[i][j];
+				}
+			}
+			return C;
+		}
+		
+		public float[][] metricDevide(float[][] A, float n){
+			float[][] C = new float[A.length][A[0].length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < A[0].length; j++){
+					C[i][j] = A[i][j] / n;
+				}
+			}
+			return C;
+		}
+		
+		public float[][] vectorTimesVector(float[] A, float[] B){
+			float[][] C = new float[A.length][B.length];
+			for(int i = 0; i < A.length; i++){
+				for(int j = 0; j < B.length; j++){
+					C[i][j] = A[i] * B[j];
+				}
+			}
+			return C;
+		}
+		
+		public float[] vectorDotTimes(float[] A, float[] B){
+			float[] C = new float[A.length];
+			for(int i = 0; i < A.length; i++){
+				C[i] = A[i] * B[i];
+			}
+			return C;
+		}
+		
+		public float[] vectorTimesMetric(float[] A, float[][] B){
+			int A_row = A.length;
+			int B_row = B.length;
+			int B_col = B[0].length;
+			if(A_row != B_col ){
+				return null;
+			}
+			float[] C = new float[B_row];
+			for(int i = 0; i < B_row; i++){
+				for(int j = 0; j < A_row; j++){
+					C[i] += A[j] * B[i][j];
+				}
+			}
+			return C;
+		}
+		
+		public float[] vectorPlus(float[] A, float[] B){
+			float[] C = new float[A.length];
+			for(int i = 0; i < A.length; i++){
+				C[i] = A[i] + B[i];
+			}
+			return C;
+		}
+		
+		public float[] vectorMinus(float[] A, float[] B){
+			float[] C = new float[A.length];
+			for(int i = 0; i < A.length; i++){
+				C[i] = A[i] - B[i];
+			}
+			return C;
 		}
 		
 		public float[][] metricSquare(float[][] A){
@@ -618,6 +848,7 @@ class MyDatas{
 		}
 		
 		public float[][] metricPlus(float[][] A, float[][] B){
+			//MyLog.i("metricPlus", "metricPlus " + A.length + A[0].length + B.length + B[0].length);
 			float[][] C = new float[A.length][A[0].length];
 			for(int i = 0; i < A.length; i++){
 				for(int j = 0; j < A[0].length; j++){
@@ -685,6 +916,38 @@ class MyDatas{
 			return z_sigmod;
 		}
 		
+		public float[] sigmod(float[] z){
+			float[] z_sigmod = new float[z.length];
+			for(int i = 0; i < z.length; i++)
+			{
+				z_sigmod[i] = (float) (1.0 / (1.0 + Math.exp(-z[i])));
+			}
+			return z_sigmod;
+		}
+		
+		public float[] sigmodGradient(float[] z){
+			float[] s = sigmod(z);
+			float[] g = new float[z.length];
+			for(int i = 0; i < z.length; i++){
+				g[i] = (s[i] * (1.0f - s[i]));
+			}
+			return g;
+			
+		}
+	
+		public void view(float[][] A){
+			String s = "";
+			for(int i = 0; i < A.length; i++){
+				s = "";
+				for(int j = 0; j < A[0].length; j++){
+					s += A[i][j] + ",";
+				}
+				MyLog.w("MyDatas.view","view:" + s);
+			}
+			MyLog.w("MyDatas.view", "view row:" + A.length + " col:" + A[0].length);
+			//MyLog.w("MyDatas.view","view:" + s);
+		}
+	
 	}
 
 	public svm_problem returnSvmProblem(double[] label, float[][] datas){
