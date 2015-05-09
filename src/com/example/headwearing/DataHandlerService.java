@@ -27,7 +27,7 @@ import android.widget.Toast;
 
 public class DataHandlerService extends Service{
 	public boolean DEBUG = true;
-	public boolean simulation = false;
+	public boolean simulation = true;
 	public static int LEN_OF_RECEIVED_DATA = 5;
 	private final static String TAG = "testDataHandlerSerivce";
 	public final static String DATA_SIMULATION = "DATA SIMULATION";
@@ -67,7 +67,7 @@ public class DataHandlerService extends Service{
 		}
 		sqlitedb = SQLiteDatabase.openOrCreateDatabase(file, null);
 		sqlitedb.execSQL("CREATE table if not exists acceleration_data (id INTEGER PRIMARY KEY AUTOINCREMENT, label int, data text, recv_time long)");
-		sqlitedb.execSQL("delete from acceleration_data where id > 1");
+		//sqlitedb.execSQL("delete from acceleration_data where id > 1");
 		return true;
 	}
 	
@@ -123,9 +123,6 @@ public class DataHandlerService extends Service{
 		}
 	}
 	
-	MyDatas.SignalData sd1 = new MyDatas().new SignalData();
-	MyDatas.SignalData sd2 = new MyDatas().new SignalData();
-	
 	public void dataHandler(String data){
 		MyLog.w(TAG,"dataHandler:" + data);
 		saveData(data);
@@ -168,6 +165,7 @@ public class DataHandlerService extends Service{
 	MyDatas.SignalData data1 = new MyDatas().new SignalData();
 	MyDatas.SignalData data2 = new MyDatas().new SignalData();
 	public float[] getFeature(float x, float y, float z){
+		//MyLog.i("DataHandlerService.getFeature", "getFeature");
 		//data1 走了半个窗长后才开始使用data2
 		float[] feature = null;
 		if(data1.len == MyDatas.HALF_OF_SIGNAL_DATA){
@@ -175,7 +173,9 @@ public class DataHandlerService extends Service{
 		}
 		data1.used = true;
 		if(data1.used){
+			//MyLog.i("used", "data1.used = true");
 			if(!data1.using){
+				//MyLog.i("using", "data1.using = false");
 				data1.enData(x, y, z);
 				//MyLog.w("test",""+sd1.len);
 				if(data1.len == MyDatas.LEN_OF_SIGNAL_DATA){
@@ -209,10 +209,13 @@ public class DataHandlerService extends Service{
 		ArrayList<Integer> array_list_y = new ArrayList<Integer>();
 		for(int j = 1; j <= HeadWear.LABEL_NUM; j++)
 		{
-			sql = "select * from acceleration_data where label = " + j;
+			sql = "select * from acceleration_data where id > 1";//label = " + j;
 			c = sqlitedb.rawQuery(sql, new String[]{});
+			int k = 0;
 	        while(c.moveToNext())
 	        {
+	        	MyLog.i("kkkkkk", "kkkkk:" + k);
+	        	k++;
 	        	data = c.getString(c.getColumnIndex("data"));
 	        	if(!simulation){
 	    			int d = 0;
@@ -236,12 +239,14 @@ public class DataHandlerService extends Service{
 	    				z = (float)Double.parseDouble(data_signal[i].split("d")[2]);
 	    				feature = getFeature(x, y, z);
 	    				if(feature != null){
+	    					MyLog.i("DataH", "feature != null");
 	    					array_list_x.add(feature);
 	    					array_list_y.add(i);
 	    				}
 	    			}
 	    		}//if(!simulation)
 	        }//while(c.moveToNext())
+	        c.close();
 		}//for(int j = 1; j <= HeadWear.LABEL_NUM; j++)
 		float[][] X = new float[array_list_x.size()][MyDatas.FEATURE_NUM];
 		for(int i = 0; i < array_list_x.size(); i++){
@@ -261,6 +266,8 @@ public class DataHandlerService extends Service{
 		}
 		mNeuralNetwork.view(X);
 		mNeuralNetwork.view(Y);
+		mNeuralNetwork.setDatas(X,Y);
+		mNeuralNetwork.train(500);
 	}
 	
 	public void predict(float[] f){

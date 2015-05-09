@@ -309,8 +309,8 @@ public class HeadWear extends Activity {
 					}
 				}).start();
 				//neural_test();
-				//String svm_test_result = svm_test();
-				//tv.setText("button2 onclick \n svm_result: " + svm_test_result);
+				String svm_test_result = svm_test();
+				tv.setText("button2 onclick \n svm_result: " + svm_test_result);
 			}else if(v == button5){
 				mDataHandlerService.trainNN();
 			}else{
@@ -335,14 +335,64 @@ public class HeadWear extends Activity {
 		}
 	}
 	
+	public void initTestDataForSVM(){
+		//初始化测试数据，总共500个数据
+		float[][] test_x = new float[50][13];
+		double[] test_y = new double[50];
+		float d = 3f;
+		//100个label为1的数据，向量在[1,1,1,1,1,1,1,1,1,1,1,1]附近
+		for(int i = 0; i < 10; i++){
+			for(int j = 1; j < 13; j++){
+				test_x[i][j] = j + (float) (Math.random() - 0.5) * d;
+			}
+			test_y[i] = 1;
+		}
+		//100个label为2的数据，向量在[10,10,10,10,10,10,10,10,10,10,10,10]附近
+		for(int i = 10; i < 20; i++){
+			for(int j = 1; j < 13; j++){
+				test_x[i][j] = (13-j) + (float) (Math.random() - 0.5) * d;
+			}
+			test_y[i] = 2;
+		}
+		//100个label为3的数据，向量在[100,100,100,100,100,100,100,100,100,100,100,100]附近
+		for(int i = 20; i < 30; i++){
+			for(int j = 1; j < 13; j++){
+				test_x[i][j] = 100 + (float) (Math.random() - 0.5) * d;
+			}
+			test_y[i] = 3;
+		}
+		//100个label为4的数据，向量在[1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000]附近
+		for(int i = 30; i < 40; i++){
+			for(int j = 1; j < 13; j++){
+				test_x[i][j] = (float) (Math.pow(-1,j) * j + (float) (Math.random() - 0.5) * d);
+			}
+			test_y[i] = 4;
+		}
+		//100个label为5的数据，向量在[10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000]附近
+		for(int i = 40; i < 50; i++){
+			for(int j = 1; j < 13; j++){
+				test_x[i][j] = (float) Math.pow(2, j) + (float) (Math.random() - 0.5) * d;
+			}
+			test_y[i] = 5;
+		}
+		for(int i = 0; i < 50; i++){
+			test_x[i][0] = 1;
+		}
+		label_svm = test_y;
+		datas_svm = test_x;
+	}
+	double[] label_svm;
+	float[][] datas_svm;
+	
 	public String svm_test(){
+		initTestDataForSVM();
 		String result = "";
 		double[] label = {1,2,3};
 		float[][] datas = { {10,10},
 							{-10,-10},
 							{0,0} };
 		MyDatas mMyDatas = new MyDatas();
-		svm_problem mProblem = mMyDatas.returnSvmProblem(label,datas);
+		svm_problem mProblem = mMyDatas.returnSvmProblem(label_svm,datas_svm);
 		svm_parameter mParam = new svm_parameter();
 		mParam.cache_size = 100;
 		mParam.eps = 0.00001;
@@ -350,10 +400,23 @@ public class HeadWear extends Activity {
 		mParam.gamma = 0.001;
 		mParam.kernel_type = svm_parameter.RBF;
 		result += "check: " + svm.svm_check_parameter(mProblem, mParam) + "\n gamma:" + mParam.gamma + "\n";
-		float[] predict_datas = {-5,-5.1f};
-		svm_node[] mPredict = mMyDatas.returnSvmPredictData(predict_datas);
+		
 		svm_model model = svm.svm_train(mProblem, mParam); //svm.svm_train()训练出SVM分类模型
+		float[] predict_datas1 = {1,1,2,3,4,5,6,7,8,9,10,11,12};
+		float[] predict_datas2 = {1,12,11,10,9,8,7,6,5,4,3,2,1};
+		float[] predict_datas3 = {1,100,100,100,100,100,100,100,100,100,100,100,100};
+		float[] predict_datas4 = {1,-1,2,-3,4,-5,6,-7,8,-9,10,-11,12};
+		float[] predict_datas5 = {1,2,4,8,16,32,64,128,256,512,1024,2048,4096};
+		svm_node[] mPredict = mMyDatas.returnSvmPredictData(predict_datas1);
 		result += "result: " + svm.svm_predict(model, mPredict) ;
+		mPredict = mMyDatas.returnSvmPredictData(predict_datas2);
+		result += "\nresult: " + svm.svm_predict(model, mPredict) ;
+		mPredict = mMyDatas.returnSvmPredictData(predict_datas3);
+		result += "\nresult: " + svm.svm_predict(model, mPredict) ;
+		mPredict = mMyDatas.returnSvmPredictData(predict_datas4);
+		result += "\nresult: " + svm.svm_predict(model, mPredict) ;
+		mPredict = mMyDatas.returnSvmPredictData(predict_datas5);
+		result += "\nresult: " + svm.svm_predict(model, mPredict) ;
 		return result;
 	}
 	

@@ -42,6 +42,7 @@ class MyDatas{
 		public boolean using = false;
 		public int error_time = 5;
 		public boolean enData(float x, float y, float z){
+			//MyLog.i("MyDatas.endData", "enData ");
 			if(!using){
 				if(len < LEN_OF_SIGNAL_DATA){
 					len++;
@@ -115,24 +116,24 @@ class MyDatas{
 			standardDeviation();
 			kurtosis();
 			correlation();
-			//using = false;
+			using = false;
 			MyLog.w(TAG,"calculate over.");
 			if(HeadWear.DEBUG){
-				MyLog.w(TAG + "meanValue:", "" + mean_x_value);
-				MyLog.w(TAG + "meanValue:", "" + mean_y_value);
-				MyLog.w(TAG + "meanValue:", "" + mean_z_value);
-				MyLog.w(TAG + "n_variance:Value", "" + n_variance_x_value);
-				MyLog.w(TAG + "n_varianceValue:", "" + n_variance_y_value);
-				MyLog.w(TAG + "n_varianceValue:", "" + n_variance_z_value);
-				MyLog.w(TAG + "standard_deviationValue:", "" + standard_deviation_x_value);
-				MyLog.w(TAG + "standard_deviationValue:", "" + standard_deviation_y_value);
-				MyLog.w(TAG + "standard_deviationValue:", "" + standard_deviation_z_value);
-				MyLog.w(TAG + "kurtosisValue:", "" + kurtosis_x_value);
-				MyLog.w(TAG + "kurtosisValue:", "" + kurtosis_y_value);
-				MyLog.w(TAG + "kurtosisValue:", "" + kurtosis_z_value);
-				MyLog.w(TAG + "correlationValue:", "" + correlation_x_y_value);
-				MyLog.w(TAG + "correlationValue:", "" + correlation_y_z_value);
-				MyLog.w(TAG + "correlationValue:", "" + correlation_z_x_value);
+				MyLog.w("ViewFeature" + "meanValue:", "" + mean_x_value);
+				MyLog.w("ViewFeature" + "meanValue:", "" + mean_y_value);
+				MyLog.w("ViewFeature" + "meanValue:", "" + mean_z_value);
+				MyLog.w("ViewFeature" + "n_variance:Value", "" + n_variance_x_value);
+				MyLog.w("ViewFeature" + "n_varianceValue:", "" + n_variance_y_value);
+				MyLog.w("ViewFeature" + "n_varianceValue:", "" + n_variance_z_value);
+				MyLog.w("ViewFeature" + "standard_deviationValue:", "" + standard_deviation_x_value);
+				MyLog.w("ViewFeature" + "standard_deviationValue:", "" + standard_deviation_y_value);
+				MyLog.w("ViewFeature" + "standard_deviationValue:", "" + standard_deviation_z_value);
+				MyLog.w("ViewFeature" + "kurtosisValue:", "" + kurtosis_x_value);
+				MyLog.w("ViewFeature" + "kurtosisValue:", "" + kurtosis_y_value);
+				MyLog.w("ViewFeature" + "kurtosisValue:", "" + kurtosis_z_value);
+				MyLog.w("ViewFeature" + "correlationValue:", "" + correlation_x_y_value);
+				MyLog.w("ViewFeature" + "correlationValue:", "" + correlation_y_z_value);
+				MyLog.w("ViewFeature" + "correlationValue:", "" + correlation_z_x_value);
 			}
 		}
 		
@@ -641,7 +642,7 @@ class MyDatas{
 			y = test_y;
 		}
 		
-		public void setData(float[][] input_x){
+		public void setDatas(float[][] input_x, float[][] input_y){
 			float[][] new_x = new float[input_x.length][layer1_num + 1];
 			for(int i = 0; i < input_x.length; i++){
 				new_x[i][0] = 1;
@@ -650,10 +651,12 @@ class MyDatas{
 				}
 			}
 			X = new_x;
+			y = input_y;
 		}
 		
 		public void train(int iteration){
-			boolean inTest = true;
+			init();
+			boolean inTest = false;
 			if(inTest){
 				initTestData();
 			}
