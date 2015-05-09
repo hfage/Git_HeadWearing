@@ -59,6 +59,7 @@ public class HeadWear extends Activity {
 	public static String TAG = "testHeadWear";
 	public static boolean mBLEDeviceConnected = false;
 	public static boolean mBLEDeviceConnecting = true;
+	public static int LABEL_NUM = 5;
 	
 	
 	private String mDeviceName = "";
@@ -85,6 +86,7 @@ public class HeadWear extends Activity {
 	private Button button2;
 	private Button button3;
 	private Button button4;
+	private Button button5;
 	private Spinner spinner_service;
 	private ArrayAdapter spinner_service_adapter;
 	private Spinner spinner_characteristic;
@@ -115,10 +117,12 @@ public class HeadWear extends Activity {
 		button2 = (Button) findViewById(R.id.button2);
 		button3 = (Button) findViewById(R.id.button3);
 		button4 = (Button) findViewById(R.id.button4);
+		button5 = (Button) findViewById(R.id.button5);
 		button1.setOnClickListener(new ClickEvent());
 		button2.setOnClickListener(new ClickEvent());
 		button3.setOnClickListener(new ClickEvent());
 		button4.setOnClickListener(new ClickEvent());
+		button5.setOnClickListener(new ClickEvent());
 		spinner_service = (Spinner) findViewById(R.id.spinner_service);
 		spinner_characteristic = (Spinner) findViewById(R.id.spinner_characteristic);
 		spinner_label = (Spinner) findViewById(R.id.spinner_label);
@@ -304,9 +308,11 @@ public class HeadWear extends Activity {
 						//socket_test();
 					}
 				}).start();
-				neural_test();
+				//neural_test();
 				//String svm_test_result = svm_test();
 				//tv.setText("button2 onclick \n svm_result: " + svm_test_result);
+			}else if(v == button5){
+				mDataHandlerService.trainNN();
 			}else{
 				// 
 			}
@@ -374,74 +380,46 @@ public class HeadWear extends Activity {
 		tv.setText(ss);
 		nn.train(5000);
 		String s = "";
-		float[][] pred1 = new float[2][13];
+		float[] pred1 = new float[13];
 		
 		
 		for(int i = 0; i < 2; i++){
-			pred1[i][0] = 1;
+			pred1[0] = 1;
 			for(int j = 1; j < 13; j++){
-				pred1[i][j] = j;
+				pred1[j] = j;
 			}
 		}
-		float[][] h = nn.predict(pred1);
-		s = "";
-		for(int i = 0; i < h[0].length; i++){
-			s += "," + h[0][i];
-		}
-		MyLog.i("Pred",  "Pred:" + s);
+		int h = nn.predict(pred1);
+		MyLog.i("Pred",  "Pred:" + h);
 		
 		
-		for(int i = 0; i < 2; i++){
-			pred1[i][0] = 1;
-			for(int j = 1; j < 13; j++){
-				pred1[i][j] = 13 - j;
-			}
+		pred1[0] = 1;
+		for(int j = 1; j < 13; j++){
+			pred1[j] = 13 - j;
 		}
 		h = nn.predict(pred1);
-		s = "";
-		for(int i = 0; i < h[0].length; i++){
-			s += "," + h[0][i];
-		}
-		MyLog.i("Pred",  "Pred:" + s);
+		MyLog.i("Pred",  "Pred:" + h);
 		
-		for(int i = 0; i < 2; i++){
-			pred1[i][0] = 1;
-			for(int j = 1; j < 13; j++){
-				pred1[i][j] = 100;
-			}
+		pred1[0] = 1;
+		for(int j = 1; j < 13; j++){
+			pred1[j] = 100;
 		}
 		h = nn.predict(pred1);
-		s = "";
-		for(int i = 0; i < h[0].length; i++){
-			s += "," + h[0][i];
-		}
-		MyLog.i("Pred",  "Pred:" + s);
+		MyLog.i("Pred",  "Pred:" + h);
 		
-		for(int i = 0; i < 2; i++){
-			pred1[i][0] = 1;
-			for(int j = 1; j < 13; j++){
-				pred1[i][j] = (float) (Math.pow(-1,j) * j);
-			}
+		pred1[0] = 1;
+		for(int j = 1; j < 13; j++){
+			pred1[j] = (float) (Math.pow(-1,j) * j);
 		}
 		h = nn.predict(pred1);
-		s = "";
-		for(int i = 0; i < h[0].length; i++){
-			s += "," + h[0][i];
-		}
-		MyLog.i("Pred",  "Pred:" + s);
+		MyLog.i("Pred",  "Pred:" + h);
 		
-		for(int i = 0; i < 2; i++){
-			pred1[i][0] = 1;
-			for(int j = 1; j < 13; j++){
-				pred1[i][j] = (float) (Math.pow(2,j) * j);
-			}
+		pred1[0] = 1;
+		for(int j = 1; j < 13; j++){
+			pred1[j] = (float) (Math.pow(2,j) * j);
 		}
 		h = nn.predict(pred1);
-		s = "";
-		for(int i = 0; i < h[0].length; i++){
-			s += "," + h[0][i];
-		}
-		MyLog.i("Pred",  "Pred:" + s);
+		MyLog.i("Pred",  "Pred:" + h);
 	}
 
 	public void setBarChartData(float x, float y, float z){
@@ -538,7 +516,7 @@ public class HeadWear extends Activity {
 		switch(id){
 			case R.id.menu_scan:{
 				if(!mBLEDeviceConnected){
-					boolean inTest = false;
+					boolean inTest = true;
 					if(inTest){
 						Intent sendIntent = new Intent(BLEDevice.BLE_CONNECT_DEVICE);
 						sendIntent.putExtra(BLEDevice.BLE_DEVICE_NAME, "a");

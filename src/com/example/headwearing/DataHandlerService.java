@@ -6,13 +6,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.BitSet;
+
+import com.example.headwearing.MyDatas.NeuralNetworkML;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Binder;
 import android.os.Environment;
@@ -23,12 +27,13 @@ import android.widget.Toast;
 
 public class DataHandlerService extends Service{
 	public boolean DEBUG = true;
-	public boolean simulation = true;
+	public boolean simulation = false;
 	public static int LEN_OF_RECEIVED_DATA = 5;
 	private final static String TAG = "testDataHandlerSerivce";
 	public final static String DATA_SIMULATION = "DATA SIMULATION";
 	public final static String DATA_RECEIVE = "DATA RECEIVE";
 	private SQLiteDatabase sqlitedb;
+	MyDatas.NeuralNetworkML mNeuralNetwork = new MyDatas().new NeuralNetworkML();
 	private File path = new File("/sdcard/dbfile/"); //数据库文件目录  
     private File file = new File("/sdcard/dbfile/headwearing.db"); //数据库文件  
 	
@@ -38,7 +43,7 @@ public class DataHandlerService extends Service{
 			new Thread(new Runnable() {                    
 				@Override
 				public void run() {
-					//dataSimulation();
+					dataSimulation();
 				}
 			}).start();
 		}
@@ -111,7 +116,7 @@ public class DataHandlerService extends Service{
 	}
 	
 	public void saveData(String data){
-		if(HeadWear.label <= 5 && HeadWear.label >= 1){
+		if(HeadWear.label <= HeadWear.LABEL_NUM && HeadWear.label >= 1){
 			String sql = "insert into acceleration_data(label, data, recv_time) values("+ HeadWear.label +",'" + data + "'," + System.currentTimeMillis() + ")";
 			MyLog.w(TAG,sql);
 			sqlitedb.execSQL(sql);
@@ -127,16 +132,14 @@ public class DataHandlerService extends Service{
 		float[] x = new float[LEN_OF_RECEIVED_DATA];
 		float[] y = new float[LEN_OF_RECEIVED_DATA];
 		float[] z = new float[LEN_OF_RECEIVED_DATA];
-		boolean simulation = false;
 		if(!simulation){
 			int d = 0;
 			for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
 				d = 6 * i;
-				
 				x[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
 				y[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
 				z[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
-				train(x[i], y[i], z[i]);
+//				getFeature(x[i], y[i], z[i]);
 			}
 		}else{
 			String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
@@ -149,25 +152,7 @@ public class DataHandlerService extends Service{
 				x[i] = (float)Double.parseDouble(data_signal[i].split("d")[0]);
 				y[i] = (float)Double.parseDouble(data_signal[i].split("d")[1]);
 				z[i] = (float)Double.parseDouble(data_signal[i].split("d")[2]);
-				if(sd1.len == MyDatas.HALF_OF_SIGNAL_DATA){
-					sd2.used = true;
-				}
-				sd1.used = true;
-				if(sd1.used){
-					sd1.enData(x[i],y[i],z[i]);
-					//MyLog.w("test",""+sd1.len);
-					if(sd1.len == MyDatas.LEN_OF_SIGNAL_DATA){
-						sd1.calculate();
-						sd1.resetDatas();
-					}
-				}
-				if(sd2.used){
-					sd2.enData(x[i],y[i],z[i]);
-					if(sd2.len == MyDatas.LEN_OF_SIGNAL_DATA){
-						sd2.calculate();
-						sd2.resetDatas();
-					}
-				}
+				getFeature(x[i], y[i], z[i]);
 			}
 		}
 		if(HeadWear.viewAcceleration){
@@ -182,8 +167,9 @@ public class DataHandlerService extends Service{
 	//原始数据，用以计算特征值
 	MyDatas.SignalData data1 = new MyDatas().new SignalData();
 	MyDatas.SignalData data2 = new MyDatas().new SignalData();
-	public void train(float x, float y, float z){
+	public float[] getFeature(float x, float y, float z){
 		//data1 走了半个窗长后才开始使用data2
+		float[] feature = null;
 		if(data1.len == MyDatas.HALF_OF_SIGNAL_DATA){
 			data2.used = true;
 		}
@@ -194,8 +180,8 @@ public class DataHandlerService extends Service{
 				//MyLog.w("test",""+sd1.len);
 				if(data1.len == MyDatas.LEN_OF_SIGNAL_DATA){
 					data1.calculate();
+					feature = data1.feature2list();
 					data1.resetDatas();
-					data1.feature2list();
 				}
 			}
 		}
@@ -204,11 +190,81 @@ public class DataHandlerService extends Service{
 				data2.enData(x, y, z);
 				if(data2.len == MyDatas.LEN_OF_SIGNAL_DATA){
 					data2.calculate();
+					feature = data2.feature2list();
 					data2.resetDatas();
-					data2.feature2list();
 				}
 			}
 		}
+		return feature;
+	}
+	
+	public void trainNN(){
+		MyLog.i("DataHandlerService.trainNN", "trainNN");
+		Cursor c;
+		String data = "";
+		String sql = "";
+		float x, y, z;
+		float[] feature;
+		ArrayList<float[]> array_list_x = new ArrayList<float[]>();
+		ArrayList<Integer> array_list_y = new ArrayList<Integer>();
+		for(int j = 1; j <= HeadWear.LABEL_NUM; j++)
+		{
+			sql = "select * from acceleration_data where label = " + j;
+			c = sqlitedb.rawQuery(sql, new String[]{});
+	        while(c.moveToNext())
+	        {
+	        	data = c.getString(c.getColumnIndex("data"));
+	        	if(!simulation){
+	    			int d = 0;
+	    			for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
+	    				d = 6 * i;
+	    				x = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
+	    				y = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
+	    				z = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
+	    				feature = getFeature(x, y, z);
+	    				if(feature != null){
+	    					array_list_x.add(feature);
+	    					array_list_y.add(i);
+	    				}
+	    			}
+	    		}else{
+	    			String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
+	    			data_signal = data.split("&");
+	    			for(int i = 0; i < LEN_OF_RECEIVED_DATA; i++){
+	    				x = (float)Double.parseDouble(data_signal[i].split("d")[0]);
+	    				y = (float)Double.parseDouble(data_signal[i].split("d")[1]);
+	    				z = (float)Double.parseDouble(data_signal[i].split("d")[2]);
+	    				feature = getFeature(x, y, z);
+	    				if(feature != null){
+	    					array_list_x.add(feature);
+	    					array_list_y.add(i);
+	    				}
+	    			}
+	    		}//if(!simulation)
+	        }//while(c.moveToNext())
+		}//for(int j = 1; j <= HeadWear.LABEL_NUM; j++)
+		float[][] X = new float[array_list_x.size()][MyDatas.FEATURE_NUM];
+		for(int i = 0; i < array_list_x.size(); i++){
+			X[i] = array_list_x.get(i);
+		}
+		float[][] Y = new float[array_list_y.size()][HeadWear.LABEL_NUM];
+		int label = 0;
+		for(int i = 0; i < array_list_y.size(); i++){
+			label = array_list_y.get(i) - 1;
+			for(int j = 0; j < HeadWear.LABEL_NUM; j++){
+				if(j == label){
+					Y[i][j] = 1;
+				}else{
+					Y[i][j] = 0;
+				}
+			}
+		}
+		mNeuralNetwork.view(X);
+		mNeuralNetwork.view(Y);
+	}
+	
+	public void predict(float[] f){
+		
 	}
 	 
 	public class LocalBinder extends Binder {

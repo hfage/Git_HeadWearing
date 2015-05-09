@@ -10,6 +10,7 @@ import libsvm.svm_node;
 class MyDatas{
 	public static int LEN_OF_SIGNAL_DATA = 100;
 	public static int HALF_OF_SIGNAL_DATA = LEN_OF_SIGNAL_DATA / 2;
+	public static int FEATURE_NUM = 12;
 	public static String TAG = "MyDatas ";
 	public class SignalData{
 		ArrayList<Float> data_x = new ArrayList<Float>();
@@ -61,7 +62,7 @@ class MyDatas{
 			}else{
 				error_time--;
 				if(error_time == 0){
-					resetDatas();
+					//resetDatas();
 				}
 				return false;
 			}
@@ -69,7 +70,10 @@ class MyDatas{
 		}
 		
 		public boolean resetDatas(){
-			MyLog.w(TAG,"reset");
+			if(using){
+				return false;
+			}
+			MyLog.w(TAG,"resetDatas");
 			data_x.clear();
 			data_y.clear();
 			data_z.clear();
@@ -92,7 +96,7 @@ class MyDatas{
 			correlation_x_y_value = 0f;
 			correlation_y_z_value = 0f;
 			correlation_z_x_value = 0f;
-			used = false;
+			//used = false;
 			using = false;
 			error_time =  5;
 			return true;
@@ -111,7 +115,7 @@ class MyDatas{
 			standardDeviation();
 			kurtosis();
 			correlation();
-			using = false;
+			//using = false;
 			MyLog.w(TAG,"calculate over.");
 			if(HeadWear.DEBUG){
 				MyLog.w(TAG + "meanValue:", "" + mean_x_value);
@@ -120,9 +124,9 @@ class MyDatas{
 				MyLog.w(TAG + "n_variance:Value", "" + n_variance_x_value);
 				MyLog.w(TAG + "n_varianceValue:", "" + n_variance_y_value);
 				MyLog.w(TAG + "n_varianceValue:", "" + n_variance_z_value);
-				MyLog.w(TAG + "standar_deviationValue:", "" + standard_deviation_x_value);
-				MyLog.w(TAG + "standar_deviationValue:", "" + standard_deviation_y_value);
-				MyLog.w(TAG + "standar_deviationValue:", "" + standard_deviation_z_value);
+				MyLog.w(TAG + "standard_deviationValue:", "" + standard_deviation_x_value);
+				MyLog.w(TAG + "standard_deviationValue:", "" + standard_deviation_y_value);
+				MyLog.w(TAG + "standard_deviationValue:", "" + standard_deviation_z_value);
 				MyLog.w(TAG + "kurtosisValue:", "" + kurtosis_x_value);
 				MyLog.w(TAG + "kurtosisValue:", "" + kurtosis_y_value);
 				MyLog.w(TAG + "kurtosisValue:", "" + kurtosis_z_value);
@@ -246,7 +250,7 @@ class MyDatas{
 				s += "f[" + i + "]:" + f[i] + " &";
 			}
 			MyLog.i("MyDatas.feature2list",s);
-			return null;
+			return f;
 		}
 	}
 	
@@ -546,7 +550,7 @@ class MyDatas{
 		public static final int layer2_num = 10;
 		public static final int layer3_num = 5;
 		public static final float lambda = 1f;
-		public float alpha = 0.01f;
+		public float alpha = 0.25f;
 		
 		public float[][] theta1, theta1_grad; // 13 * 10
 		public float[][] theta2, theta2_grad; // 11 * 5
@@ -637,37 +641,72 @@ class MyDatas{
 			y = test_y;
 		}
 		
+		public void setData(float[][] input_x){
+			float[][] new_x = new float[input_x.length][layer1_num + 1];
+			for(int i = 0; i < input_x.length; i++){
+				new_x[i][0] = 1;
+				for(int j = 1; j < layer1_num + 1; j++){
+					new_x[i][j] = input_x[i][j-1];
+				}
+			}
+			X = new_x;
+		}
+		
 		public void train(int iteration){
-			initTestData();
-			//view(y);
+			boolean inTest = true;
+			if(inTest){
+				initTestData();
+			}
+			float cost = 0f;
 			for(int i = 0; i < iteration; i++){
-				nnCostFunction();
-				if(iteration == 100)alpha = alpha / 10;
-				if(iteration == 500)alpha = alpha / 10;
-				if(iteration == 1500)alpha = alpha / 10;
+				cost = nnCostFunction();
+				MyLog.i("nnCostFunction", "cost: " + cost);
+				if(iteration == 50)alpha = 0.1f;
+//				if(iteration == 500)alpha = alpha / 10;
+//				if(iteration == 1500)alpha = alpha / 10;
 				theta2 = metricMinus(theta2, theta2_grad, alpha);
 				theta1 = metricMinus(theta1, theta1_grad, alpha);
 			}
 		}
 		
-		public float[][] predict(float[][] inputx){
-			float[][] a1 = inputx; // m * 13
-			float[][] z2 = metricTimes(a1, theta1); // a1 * theta1
-			float[][] a2_tmp = sigmod(z2); // m * 10
-			float[][] a2 = new float[2][layer2_num + 1]; //m * 11
-			for(int i = 0; i < 2; i++){
-				a2[i][0] = 1f;
-				for(int j = 1; j < layer2_num + 1; j++){
-					a2[i][j] = a2_tmp[i][j-1];
+		public int predict(float[] inputx){
+			float[] a1 = new float[layer1_num + 1];
+			if(inputx.length == layer1_num){
+				a1[0] = 1;
+				for(int i = 1; i < layer1_num + 1; i++){
+					a1[i] = inputx[i-1];
+				}
+			}else{
+				a1 = inputx;
+			}
+			float[] z2 = forwardVectorTimesMetric(a1, theta1); // a1 * theta1
+			float[] a2_tmp = sigmod(z2); // m * 10
+			float[] a2 = new float[layer2_num + 1]; //m * 11
+			a2[0] = 1f;
+			for(int j = 1; j < layer2_num + 1; j++){
+				a2[j] = a2_tmp[j-1];
+			}
+			
+			float[] z3 = forwardVectorTimesMetric(a2, theta2);
+			float[] a3 = sigmod(z3);
+			float[] h = a3;
+			return max(h);
+		}
+		
+		public int max(float[] A){
+			int l = 0;
+			int len = A.length;
+			float temp = A[0];
+			for(int i = 1; i < len; i++){
+				if(A[i] > temp){
+					temp = A[i];
+					l = i;
 				}
 			}
-			float[][] z3 = metricTimes(a2, theta2);
-			float[][] a3 = sigmod(z3);
-			float[][] h = a3;
-			return h;
+			return l + 1;
 		}
 
-		public void nnCostFunction(){
+		public float nnCostFunction(){
 			int m = X.length;
 			float J = 0;
 			float[][] a1 = X; // m * 13
@@ -690,13 +729,6 @@ class MyDatas{
 					}
 				}
 			}
-//			view(h);
-//			MyLog.i("nnCostFunction", "costfunction J1: " + J);
-			float sum = sumMetric( metricPlus(metricDotTimes(y, logMetric(h)) , metricDotTimes(metricMinus(onesMetric(y),y), logMetric(metricMinus(onesMetric(h),h ))))  );
-			J = (-1f / m) * sum;
-			float a = 2.324234234f;
-			float b = 2.345f;
-//			MyLog.i("nnCostFunction", "sum:"+sum+"costfunction J2: " + J  +"a:" + a + "b:" + b);
 			float[][] tmp_theta1 = new float[layer1_num][layer2_num];
 			for(int i = 0; i < layer1_num; i++){
 				for(int j = 0; j < layer2_num; j++){
@@ -710,7 +742,6 @@ class MyDatas{
 				}
 			}
 			J += J + lambda / (2f * m) * (sumMetric(metricSquare(tmp_theta1)) + sumMetric(metricSquare(tmp_theta2)));
-//			MyLog.i("nnCostFunction", "costfunction J3: " + J);
 			float[][] Delta1 = new float[layer1_num + 1][layer2_num]; // 13 * 10
 			float[][] Delta2 = new float[layer2_num + 1][layer3_num]; // 11 * 5
 			float[] delta3 = new float[layer3_num];//5  
@@ -733,8 +764,7 @@ class MyDatas{
 					theta2_grad[i][j] = theta2_grad[i][j] + lambda * theta2[i][j] / m; 
 				}
 			}
-			
-			MyLog.i("nnCostFunction", "costfunction J4: " + J);
+			return J;
 		}
 		
 		public float[][] metricMinus(float[][] A, float[][] B, float a){
@@ -780,12 +810,30 @@ class MyDatas{
 			int B_row = B.length;
 			int B_col = B[0].length;
 			if(A_row != B_col ){
+				MyLog.i("Mydatas.vectorTimesMetric", "vectorTimesMetric: A_row != B_col");
 				return null;
 			}
 			float[] C = new float[B_row];
 			for(int i = 0; i < B_row; i++){
 				for(int j = 0; j < A_row; j++){
 					C[i] += A[j] * B[i][j];
+				}
+			}
+			return C;
+		}
+		
+		public float[] forwardVectorTimesMetric(float[] A, float[][] B){
+			int A_row = A.length;
+			int B_row = B.length;
+			int B_col = B[0].length;
+			if(A_row != B_row ){
+				MyLog.i("Mydatas.vectorTimesMetric", "vectorTimesMetric: A_row != B_row");
+				return null;
+			}
+			float[] C = new float[B_col];
+			for(int i = 0; i < B_col; i++){
+				for(int j = 0; j < A_row; j++){
+					C[i] += A[j] * B[j][i];
 				}
 			}
 			return C;
