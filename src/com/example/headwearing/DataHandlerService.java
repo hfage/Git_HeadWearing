@@ -9,6 +9,12 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.BitSet;
 
+import libsvm.svm;
+import libsvm.svm_model;
+import libsvm.svm_node;
+import libsvm.svm_parameter;
+import libsvm.svm_problem;
+
 import com.example.headwearing.MyDatas.NeuralNetworkML;
 
 import android.app.Service;
@@ -27,11 +33,12 @@ import android.widget.Toast;
 
 public class DataHandlerService extends Service{
 	public boolean DEBUG = true;
-	public boolean simulation = true;
+	public static boolean simulation = true;
 	public boolean train_nn = false;
 	public boolean train_svm = false;
 	public boolean isCalculate = false;
 	public static int LEN_OF_RECEIVED_DATA = 5;
+	public static int BUFFER_SIZE = 50;
 	private final static String TAG = "testDataHandlerSerivce";
 	public final static String DATA_SIMULATION = "DATA SIMULATION";
 	public final static String DATA_RECEIVE = "DATA RECEIVE";
@@ -47,7 +54,7 @@ public class DataHandlerService extends Service{
 				@Override
 				public void run() {
 					try {
-	    				Thread.sleep(20000);
+	    				Thread.sleep(15000);
 	    			} catch (InterruptedException e) {
 	    				// TODO Auto-generated catch block
 	    				MyLog.i("DataH", "InterruptedException");
@@ -81,6 +88,7 @@ public class DataHandlerService extends Service{
 		return true;
 	}
 	
+    ArrayList<String> sendBuffer = new ArrayList<String>();
 	public void dataSimulation(){
 		InputStream inputStream = getResources().openRawResource(R.raw.a9t1);
 		InputStreamReader inputStreamReader = null;  
@@ -102,22 +110,25 @@ public class DataHandlerService extends Service{
 	        	data_total = data_total + data_signal + "&";
 	        	delta -= 1;
 	        	if(delta == 0){
-	        		Intent intent = new Intent(DATA_SIMULATION);
-	        		intent.putExtra("data", data_total);
-	        		MyLog.w("sent","sleep sendBrocast");
-	        		sendBroadcast(intent);
+	        		sendBuffer.add(data_total);
 	        		data_signal = "";
 	        		data_total = "";
 	        		delta = LEN_OF_RECEIVED_DATA;
-	        		MyLog.i("test", "sleep1");
-	        		try {
-	    				Thread.sleep(20);
-	    			} catch (InterruptedException e) {
-	    				// TODO Auto-generated catch block
-	    				MyLog.i("DataH", "InterruptedException");
-	    				e.printStackTrace();
-	    			}
-	        		MyLog.i("test", "sleep2");
+	        		if(sendBuffer.size() == BUFFER_SIZE){
+		        		Intent intent = new Intent(DATA_SIMULATION);
+		        		intent.putExtra("data", sendBuffer);
+		        		MyLog.w("sent","sleep sendBrocast");
+		        		sendBroadcast(intent);
+		        		try {
+		    				Thread.sleep(20 * BUFFER_SIZE);
+		    			} catch (InterruptedException e) {
+		    				// TODO Auto-generated catch block
+		    				MyLog.i("DataH", "InterruptedException");
+		    				e.printStackTrace();
+		    			}
+		        		MyLog.i("test", "sleep2");
+		        		sendBuffer.clear();
+	        		}
 	        	}
 	            limit--;
 	        	if(limit == 0){
@@ -153,6 +164,9 @@ public class DataHandlerService extends Service{
 				if(train_nn){
 					predictNN(x[i], y[i], z[i]);
 				}
+				if(train_svm){
+					predictSVM(x[i], y[i], z[i]);
+				}
 			}
 		}else{
 			String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
@@ -166,8 +180,10 @@ public class DataHandlerService extends Service{
 				y[i] = (float)Double.parseDouble(data_signal[i].split("d")[1]);
 				z[i] = (float)Double.parseDouble(data_signal[i].split("d")[2]);
 				if(train_nn){
-					MyLog.i("DataH", "train_nn = true");
-					getFeature(x[i], y[i], z[i]);
+					predictNN(x[i], y[i], z[i]);
+				}
+				if(train_svm){
+					predictSVM(x[i], y[i], z[i]);
 				}
 			}
 		}
@@ -230,9 +246,9 @@ public class DataHandlerService extends Service{
 		float[] feature;
 		ArrayList<float[]> array_list_x = new ArrayList<float[]>();
 		ArrayList<Integer> array_list_y = new ArrayList<Integer>();
-		for(int j = 1; j <= HeadWear.LABEL_NUM -4; j++)
+		for(int j = 1; j <= HeadWear.LABEL_NUM ; j++)
 		{
-			sql = "select * from acceleration_data where id > 1";//label = " + j;
+			sql = "select * from acceleration_data where label = " + j;
 			c = sqlitedb.rawQuery(sql, new String[]{});
 			int k = 0;
 	        while(c.moveToNext())
@@ -287,22 +303,105 @@ public class DataHandlerService extends Service{
 				}
 			}
 		}
-		mNeuralNetwork.view(X);
-		mNeuralNetwork.view(Y);
+//		mNeuralNetwork.view(X);
+//		mNeuralNetwork.view(Y);
 		mNeuralNetwork.setDatas(X,Y);
 		mNeuralNetwork.train(500);
 		MyLog.i("datah", "trainNN finish. reset data1, data2");
-		//data1.resetDatas();
-		//data2.resetDatas();
+		data1.resetDatas();
+		data2.resetDatas();
 		train_nn = true;
 	}
 	
+	MyDatas mMyDatas = new MyDatas();
+	svm_model model;
+	public void trainSVM(){
+		MyLog.i("dataH", "train_svm");
+		
+		Cursor c;
+		String data = "";
+		String sql = "";
+		float x, y, z;
+		float[] feature;
+		ArrayList<float[]> array_list_x = new ArrayList<float[]>();
+		ArrayList<Integer> array_list_y = new ArrayList<Integer>();
+		for(int j = 1; j <= HeadWear.LABEL_NUM ; j++)
+		{
+			sql = "select * from acceleration_data where label = " + j;
+			c = sqlitedb.rawQuery(sql, new String[]{});
+			int k = 0;
+	        while(c.moveToNext())
+	        {
+	        	MyLog.i("kkkkkk", "kkkkk:" + k);
+	        	k++;
+	        	data = c.getString(c.getColumnIndex("data"));
+	        	if(!simulation){
+	    			int d = 0;
+	    			for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
+	    				d = 6 * i;
+	    				x = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
+	    				y = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
+	    				z = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
+	    				feature = getFeature(x, y, z);
+	    				if(feature != null){
+	    					array_list_x.add(feature);
+	    					array_list_y.add(i);
+	    				}
+	    			}
+	    		}else{
+	    			String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
+	    			data_signal = data.split("&");
+	    			for(int i = 0; i < LEN_OF_RECEIVED_DATA; i++){
+	    				x = (float)Double.parseDouble(data_signal[i].split("d")[0]);
+	    				y = (float)Double.parseDouble(data_signal[i].split("d")[1]);
+	    				z = (float)Double.parseDouble(data_signal[i].split("d")[2]);
+	    				feature = getFeature(x, y, z);
+	    				if(feature != null){
+	    					MyLog.i("DataH", "feature != null");
+	    					array_list_x.add(feature);
+	    					array_list_y.add(i);
+	    				}
+	    			}
+	    		}//if(!simulation)
+	        }//while(c.moveToNext())
+	        c.close();
+		}//for(int j = 1; j <= HeadWear.LABEL_NUM; j++)
+		float[][] X = new float[array_list_x.size()][MyDatas.FEATURE_NUM];
+		for(int i = 0; i < array_list_x.size(); i++){
+			X[i] = array_list_x.get(i);
+		}
+		double[] Y = new double[array_list_y.size()];
+		for(int i = 0; i < array_list_x.size(); i++){
+			Y[i] = array_list_y.get(i);
+		}
+		svm_problem mProblem = mMyDatas.returnSvmProblem(Y,X);
+		svm_parameter mParam = new svm_parameter();
+		mParam.cache_size = 200;
+		mParam.eps = 0.00001;
+		mParam.C = 100;
+		mParam.gamma = 0.001;
+		mParam.kernel_type = svm_parameter.RBF;
+//		result += "check: " + svm.svm_check_parameter(mProblem, mParam) + "\n gamma:" + mParam.gamma + "\n";
+		model = svm.svm_train(mProblem, mParam); //svm.svm_train()训练出SVM分类模型
+		train_svm = true;
+		data1.resetDatas();
+		data2.resetDatas();
+	}
 	
 	public void predictNN(float x, float y, float z){
 		float[] f = getFeature(x, y, z);
 		if(f != null){
 			int pred = mNeuralNetwork.predict(f);
 			MyLog.i("DataHandlerService.predict", "predict:" + pred);
+		}
+	}
+	
+	public void predictSVM(float x, float y, float z){
+		float[] f = getFeature(x, y, z);
+		if(f != null){
+			svm_node[] mPredict = mMyDatas.returnSvmPredictData(f);
+			int pred = (int) svm.svm_predict(model, mPredict);
+			MyLog.i("DataHandlerService.predictSVM", "predictSVM:" + pred);
 		}
 	}
 	 
@@ -327,33 +426,86 @@ public class DataHandlerService extends Service{
 		return super.onUnbind(intent);
 	}
 	
+//	ArrayList<String> recvBuffer = new ArrayList<String>();
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver(){
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			final String action = intent.getAction();
 			if(action.equals(DATA_SIMULATION)){
-				final String data = intent.getStringExtra("data");
+				final ArrayList<String> array_list_data = intent.getStringArrayListExtra("data");
+//				final String data = intent.getStringExtra("data");
 				MyLog.i("DataH", "send receive data:");
 				new Thread(new Runnable() {                    
 					@Override
 					public void run() {
 						if(!isCalculate){
-							dataHandler(data);
+							String data = "";
+							for(int i = 0; i < BUFFER_SIZE; i++){
+								data = array_list_data.get(i);
+								dataHandler(data);
+							}
 						}else{
 							MyLog.i("DataH", "calculating");
 						}
 							
 					}
 				}).start();
+				
+//				final String data = intent.getStringExtra("data");
+//				
+//				MyLog.i("DataH", "send receive data:");
+//				new Thread(new Runnable() {                    
+//					@Override
+//					public void run() {
+//						if(!isCalculate){
+//							dataHandler(data);
+//						}else{
+//							MyLog.i("DataH", "calculating");
+//						}
+//							
+//					}
+//				}).start();
 			}else if(action.equals(BluetoothLeService.ACTION_DATA_AVAILABLE)){
-				final String data = intent.getStringExtra("data");
+				final ArrayList<String> array_list_data = intent.getStringArrayListExtra("data");
+//				final String data = intent.getStringExtra("data");
+				MyLog.i("DataH", "send receive data:");
 				new Thread(new Runnable() {                    
 					@Override
 					public void run() {
-						dataHandler(data);
+						if(!isCalculate){
+							String data = "";
+							for(int i = 0; i < BUFFER_SIZE; i++){
+								data = array_list_data.get(i);
+								dataHandler(data);
+							}
+						}else{
+							MyLog.i("DataH", "calculating");
+						}
+							
 					}
 				}).start();
+//				final String data = intent.getStringExtra("data");
+//				new Thread(new Runnable() {                    
+//					@Override
+//					public void run() {
+//							dataHandler(data);
+//					}
+//				}).start();
+//				recvBuffer.add(data);
+//				if(recvBuffer.size() == 10){
+//					new Thread(new Runnable() {                    
+//						@Override
+//						public void run() {
+//							String data_buffer;
+//							for(int i = 0; i < recvBuffer.size(); i++){
+//								data_buffer = recvBuffer.get(i);
+//								dataHandler(data_buffer);
+//							}
+//						}
+//					}).start();
+//					recvBuffer.clear();
+//				}
 			}
 		}
 	};

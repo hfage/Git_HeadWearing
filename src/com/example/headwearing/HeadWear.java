@@ -93,7 +93,10 @@ public class HeadWear extends Activity {
 	private ArrayAdapter spinner_characteristic_adapter;
 	private Spinner spinner_label;
 	private ArrayAdapter spinner_label_adapter;
+	private Spinner spinner_type;
+	private ArrayAdapter spinner_type_adapter;
 	public static int label = 0;
+	public static int type = 0;
 	
 	//定义的一些全局变量
 	public int service_index = 0;
@@ -126,9 +129,11 @@ public class HeadWear extends Activity {
 		spinner_service = (Spinner) findViewById(R.id.spinner_service);
 		spinner_characteristic = (Spinner) findViewById(R.id.spinner_characteristic);
 		spinner_label = (Spinner) findViewById(R.id.spinner_label);
+		spinner_type = (Spinner) findViewById(R.id.spinner_type);
 		String[] service_string = new String[9];
 		String[] characteristic_string = new String[9];
 		String[] label_string = new String[9];
+		String[] type_string = {"NN","SVM"};
 		for(int i = 0; i < 9; i++){
 			service_string[i] = String.valueOf(i);
 			characteristic_string[i] = String.valueOf(i);
@@ -140,15 +145,20 @@ public class HeadWear extends Activity {
 		spinner_characteristic_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner_label_adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,label_string);
 		spinner_label_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner_type_adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,type_string);
+		spinner_type_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner_service.setAdapter(spinner_service_adapter);
 		spinner_characteristic.setAdapter(spinner_characteristic_adapter);
 		spinner_label.setAdapter(spinner_label_adapter);
+		spinner_type.setAdapter(spinner_type_adapter);
 		spinner_service.setVisibility(View.VISIBLE);
 		spinner_characteristic.setVisibility(View.VISIBLE);
 		spinner_label.setVisibility(View.VISIBLE);
+		spinner_type.setVisibility(View.VISIBLE);
 		spinner_service.setOnItemSelectedListener(new SpinnerServiceListener());
 		spinner_characteristic.setOnItemSelectedListener(new SpinnerCharacteristicListener());
 		spinner_label.setOnItemSelectedListener(new SpinnerLabelListener());
+		spinner_type.setOnItemSelectedListener(new SpinnerTypeListener());
 		
 		mBarChart = (BarChart) findViewById(R.id.barchart);
 		if(viewAcceleration){
@@ -269,6 +279,23 @@ public class HeadWear extends Activity {
 		}
 		
 	}
+	
+	class SpinnerTypeListener implements OnItemSelectedListener{
+
+		@Override
+		public void onItemSelected(AdapterView<?> parent, View view,
+				int position, long id) {
+			tv.setText("train position : " + position);
+			type = position;
+		}
+
+		@Override
+		public void onNothingSelected(AdapterView<?> parent) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
 
 	class ClickEvent implements OnClickListener{
 
@@ -312,7 +339,13 @@ public class HeadWear extends Activity {
 				String svm_test_result = svm_test();
 				tv.setText("button2 onclick \n svm_result: " + svm_test_result);
 			}else if(v == button5){
-				mDataHandlerService.trainNN();
+				if(type == 0){
+					tv.setText("Train NN ");
+					mDataHandlerService.trainNN();
+				}else if(type == 1){
+					tv.setText("Train SVM");
+					mDataHandlerService.trainSVM();
+				}
 			}else{
 				// 
 			}
@@ -486,7 +519,6 @@ public class HeadWear extends Activity {
 	}
 
 	public void setBarChartData(float x, float y, float z){
-		MyLog.i("","" + x + y + z);
 		ArrayList<BarEntry> yVals = new ArrayList<BarEntry>();
 		yVals.add(new BarEntry(x, 0));
 		yVals.add(new BarEntry(y, 1));
@@ -579,7 +611,7 @@ public class HeadWear extends Activity {
 		switch(id){
 			case R.id.menu_scan:{
 				if(!mBLEDeviceConnected){
-					boolean inTest = true;
+					boolean inTest = DataHandlerService.simulation;
 					if(inTest){
 						Intent sendIntent = new Intent(BLEDevice.BLE_CONNECT_DEVICE);
 						sendIntent.putExtra(BLEDevice.BLE_DEVICE_NAME, "a");
@@ -702,7 +734,7 @@ public class HeadWear extends Activity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if(DEBUG){
-            	MyLog.i(TAG,"onReceive : " + action);
+//            	MyLog.i(TAG,"onReceive : " + action);
             }
             if(BLEDevice.BLE_CONNECT_DEVICE.equals(action)){
             	mDeviceName = intent.getStringExtra(BLEDevice.BLE_DEVICE_NAME);

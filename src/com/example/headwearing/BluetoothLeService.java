@@ -159,6 +159,7 @@ public class BluetoothLeService extends Service {
         sendBroadcast(intent);
     }
 
+    ArrayList<String> sendBuffer = new ArrayList<String>();
     private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
@@ -170,9 +171,14 @@ public class BluetoothLeService extends Service {
                 stringBuilder.append(String.format("%02X", byteChar));
             //intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
             //MyLog.d("string_builder_data: ", stringBuilder.toString());
-            intent.putExtra("data", stringBuilder.toString());
+//          intent.putExtra("data", stringBuilder.toString());
+            sendBuffer.add(stringBuilder.toString());
         }
-        sendBroadcast(intent);
+        if(sendBuffer.size() == DataHandlerService.BUFFER_SIZE){
+        	intent.putExtra("data", sendBuffer);
+        	sendBroadcast(intent);
+        	sendBuffer.clear();
+        }
     }
 
     public class LocalBinder extends Binder {
