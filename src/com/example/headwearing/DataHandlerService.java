@@ -28,6 +28,9 @@ import android.widget.Toast;
 public class DataHandlerService extends Service{
 	public boolean DEBUG = true;
 	public boolean simulation = true;
+	public boolean train_nn = false;
+	public boolean train_svm = false;
+	public boolean isCalculate = false;
 	public static int LEN_OF_RECEIVED_DATA = 5;
 	private final static String TAG = "testDataHandlerSerivce";
 	public final static String DATA_SIMULATION = "DATA SIMULATION";
@@ -43,6 +46,13 @@ public class DataHandlerService extends Service{
 			new Thread(new Runnable() {                    
 				@Override
 				public void run() {
+					try {
+	    				Thread.sleep(20000);
+	    			} catch (InterruptedException e) {
+	    				// TODO Auto-generated catch block
+	    				MyLog.i("DataH", "InterruptedException");
+	    				e.printStackTrace();
+	    			}
 					dataSimulation();
 				}
 			}).start();
@@ -94,17 +104,21 @@ public class DataHandlerService extends Service{
 	        	if(delta == 0){
 	        		Intent intent = new Intent(DATA_SIMULATION);
 	        		intent.putExtra("data", data_total);
+	        		MyLog.w("sent","sleep sendBrocast");
 	        		sendBroadcast(intent);
 	        		data_signal = "";
 	        		data_total = "";
 	        		delta = LEN_OF_RECEIVED_DATA;
+	        		MyLog.i("test", "sleep1");
+	        		try {
+	    				Thread.sleep(20);
+	    			} catch (InterruptedException e) {
+	    				// TODO Auto-generated catch block
+	    				MyLog.i("DataH", "InterruptedException");
+	    				e.printStackTrace();
+	    			}
+	        		MyLog.i("test", "sleep2");
 	        	}
-        		try {
-    				Thread.sleep(10);
-    			} catch (InterruptedException e) {
-    				// TODO Auto-generated catch block
-    				e.printStackTrace();
-    			}
 	            limit--;
 	        	if(limit == 0){
 	        		break;
@@ -136,7 +150,9 @@ public class DataHandlerService extends Service{
 				x[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
 				y[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
 				z[i] = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
-//				getFeature(x[i], y[i], z[i]);
+				if(train_nn){
+					predictNN(x[i], y[i], z[i]);
+				}
 			}
 		}else{
 			String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
@@ -149,7 +165,10 @@ public class DataHandlerService extends Service{
 				x[i] = (float)Double.parseDouble(data_signal[i].split("d")[0]);
 				y[i] = (float)Double.parseDouble(data_signal[i].split("d")[1]);
 				z[i] = (float)Double.parseDouble(data_signal[i].split("d")[2]);
-				getFeature(x[i], y[i], z[i]);
+				if(train_nn){
+					MyLog.i("DataH", "train_nn = true");
+					getFeature(x[i], y[i], z[i]);
+				}
 			}
 		}
 		if(HeadWear.viewAcceleration){
@@ -179,9 +198,11 @@ public class DataHandlerService extends Service{
 				data1.enData(x, y, z);
 				//MyLog.w("test",""+sd1.len);
 				if(data1.len == MyDatas.LEN_OF_SIGNAL_DATA){
+					isCalculate = true;
 					data1.calculate();
 					feature = data1.feature2list();
 					data1.resetDatas();
+					isCalculate = false;
 				}
 			}
 		}
@@ -189,9 +210,11 @@ public class DataHandlerService extends Service{
 			if(!data2.using){
 				data2.enData(x, y, z);
 				if(data2.len == MyDatas.LEN_OF_SIGNAL_DATA){
+					isCalculate = true;
 					data2.calculate();
 					feature = data2.feature2list();
 					data2.resetDatas();
+					isCalculate = false;
 				}
 			}
 		}
@@ -207,7 +230,7 @@ public class DataHandlerService extends Service{
 		float[] feature;
 		ArrayList<float[]> array_list_x = new ArrayList<float[]>();
 		ArrayList<Integer> array_list_y = new ArrayList<Integer>();
-		for(int j = 1; j <= HeadWear.LABEL_NUM; j++)
+		for(int j = 1; j <= HeadWear.LABEL_NUM -4; j++)
 		{
 			sql = "select * from acceleration_data where id > 1";//label = " + j;
 			c = sqlitedb.rawQuery(sql, new String[]{});
@@ -268,10 +291,19 @@ public class DataHandlerService extends Service{
 		mNeuralNetwork.view(Y);
 		mNeuralNetwork.setDatas(X,Y);
 		mNeuralNetwork.train(500);
+		MyLog.i("datah", "trainNN finish. reset data1, data2");
+		//data1.resetDatas();
+		//data2.resetDatas();
+		train_nn = true;
 	}
 	
-	public void predict(float[] f){
-		
+	
+	public void predictNN(float x, float y, float z){
+		float[] f = getFeature(x, y, z);
+		if(f != null){
+			int pred = mNeuralNetwork.predict(f);
+			MyLog.i("DataHandlerService.predict", "predict:" + pred);
+		}
 	}
 	 
 	public class LocalBinder extends Binder {
@@ -302,11 +334,16 @@ public class DataHandlerService extends Service{
 			final String action = intent.getAction();
 			if(action.equals(DATA_SIMULATION)){
 				final String data = intent.getStringExtra("data");
-				
+				MyLog.i("DataH", "send receive data:");
 				new Thread(new Runnable() {                    
 					@Override
 					public void run() {
-						dataHandler(data);
+						if(!isCalculate){
+							dataHandler(data);
+						}else{
+							MyLog.i("DataH", "calculating");
+						}
+							
 					}
 				}).start();
 			}else if(action.equals(BluetoothLeService.ACTION_DATA_AVAILABLE)){

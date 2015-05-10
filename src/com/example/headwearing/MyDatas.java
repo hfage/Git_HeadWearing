@@ -8,7 +8,7 @@ import libsvm.svm_parameter;
 import libsvm.svm_node;
 
 class MyDatas{
-	public static int LEN_OF_SIGNAL_DATA = 100;
+	public static int LEN_OF_SIGNAL_DATA = 200;
 	public static int HALF_OF_SIGNAL_DATA = LEN_OF_SIGNAL_DATA / 2;
 	public static int FEATURE_NUM = 12;
 	public static String TAG = "MyDatas ";
@@ -61,6 +61,7 @@ class MyDatas{
 				//MyLog.w("test","endata"+len);
 				return true;
 			}else{
+				MyLog.i("MyDatas","add data while using!");
 				error_time--;
 				if(error_time == 0){
 					//resetDatas();
