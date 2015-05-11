@@ -455,7 +455,7 @@ public class HeadWear extends Activity {
 	
 	MyDatas.NeuralNetworkML nn = new MyDatas().new NeuralNetworkML();
 	public void neural_test(){
-		MyLog.d("HeadWear.neural_test","neural test");
+		MyLog.i("HeadWear.neural_test","neural test");
 //		float[][] a = new float[1][1];
 //		nn.init();
 //		nn.train(200);

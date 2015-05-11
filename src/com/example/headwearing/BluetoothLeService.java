@@ -164,13 +164,13 @@ public class BluetoothLeService extends Service {
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
         final byte[] data = characteristic.getValue();
-        //MyLog.d("byte_data: ", data.toString());
+        //MyLog.i("byte_data: ", data.toString());
         if (data != null && data.length > 0) {
             final StringBuilder stringBuilder = new StringBuilder(data.length);
             for(byte byteChar : data)
                 stringBuilder.append(String.format("%02X", byteChar));
             //intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-            //MyLog.d("string_builder_data: ", stringBuilder.toString());
+            //MyLog.i("string_builder_data: ", stringBuilder.toString());
 //          intent.putExtra("data", stringBuilder.toString());
             sendBuffer.add(stringBuilder.toString());
         }
@@ -250,7 +250,7 @@ public class BluetoothLeService extends Service {
         // Previously connected device.  Try to reconnect.
         if (mBluetoothDeviceAddress != null && address.equals(mBluetoothDeviceAddress)
                 && mBluetoothGatt != null) {
-            MyLog.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
+            MyLog.i(TAG, "Trying to use an existing mBluetoothGatt for connection.");
             if (mBluetoothGatt.connect()) {
                 mConnectionState = STATE_CONNECTING;
                 MyLog.i("test","BluetoothLeService 连接BLE设备成功");
@@ -269,7 +269,7 @@ public class BluetoothLeService extends Service {
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
-        MyLog.d(TAG, "Trying to create a new connection.");
+        MyLog.i(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
         mConnectionState = STATE_CONNECTING;
         return true;

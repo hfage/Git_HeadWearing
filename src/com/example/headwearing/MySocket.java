@@ -15,15 +15,15 @@ public class MySocket{
     public boolean connect(String site, int port){
         try{
             client = new Socket(site,port);
-            MyLog.d("MySocket", "Connection");
+            MyLog.i("MySocket", "Connection");
             return true;
             //System.out.println("Client is created! site:"+site+" port:"+port);
         }catch (UnknownHostException e){
-        	MyLog.d("MySocket", "Unknow");
+        	MyLog.i("MySocket", "Unknow");
             e.printStackTrace();
             return false;
         }catch (ConnectException e){
-        	MyLog.d("MySocket", "ConnectException");
+        	MyLog.i("MySocket", "ConnectException");
         	return false;
         }catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -55,9 +55,9 @@ public class MySocket{
 							//¶Ï¿ªÁË
 							return;
 						}
-						MyLog.d("recvMsg", "len: " + len + "msg:" + String.valueOf(c));
+						MyLog.i("recvMsg", "len: " + len + "msg:" + String.valueOf(c));
 					} catch (IOException e) {
-						MyLog.d("recvMsg", "IOException");
+						MyLog.i("recvMsg", "IOException");
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}

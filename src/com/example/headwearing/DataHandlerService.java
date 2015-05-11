@@ -383,6 +383,7 @@ public class DataHandlerService extends Service{
 		mParam.kernel_type = svm_parameter.RBF;
 //		result += "check: " + svm.svm_check_parameter(mProblem, mParam) + "\n gamma:" + mParam.gamma + "\n";
 		model = svm.svm_train(mProblem, mParam); //svm.svm_train()训练出SVM分类模型
+		MyLog.i("Datah", "trainSVM finish. reset data1, data2");
 		train_svm = true;
 		data1.resetDatas();
 		data2.resetDatas();
@@ -403,6 +404,22 @@ public class DataHandlerService extends Service{
 			int pred = (int) svm.svm_predict(model, mPredict);
 			MyLog.i("DataHandlerService.predictSVM", "predictSVM:" + pred);
 		}
+	}
+	
+	public String translateData(String data){
+		MyLog.i("DataH", "translateData: " + data);
+		String s = "";
+		int index = 0;
+		s += String.valueOf(data.charAt(0)) + String.valueOf(data.charAt(1));
+		for(index = 2; index < 2 + 6 * LEN_OF_RECEIVED_DATA; index += 2){
+			int x = Integer.parseInt(String.valueOf(data.charAt(index)) + String.valueOf(data.charAt(index)),16);
+			if(x >= 128){
+				x = x - 256;
+			}
+			x += 128;
+			s += Integer.toHexString(x);
+		}
+		return s;
 	}
 	 
 	public class LocalBinder extends Binder {
@@ -426,7 +443,6 @@ public class DataHandlerService extends Service{
 		return super.onUnbind(intent);
 	}
 	
-//	ArrayList<String> recvBuffer = new ArrayList<String>();
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver(){
 
 		@Override
@@ -443,6 +459,7 @@ public class DataHandlerService extends Service{
 							String data = "";
 							for(int i = 0; i < BUFFER_SIZE; i++){
 								data = array_list_data.get(i);
+								data = translateData(data);
 								dataHandler(data);
 							}
 						}else{
