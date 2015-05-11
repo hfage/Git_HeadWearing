@@ -335,9 +335,16 @@ public class HeadWear extends Activity {
 						//socket_test();
 					}
 				}).start();
+				String data = "4F";
+				int x = Integer.parseInt(String.valueOf(data.charAt(0)) + String.valueOf(data.charAt(1)),16);
+				if(x >= 128){
+					x = x - 256;
+				}
+				x += 128;
+				tv.setText(Integer.toHexString(80) + "," + Integer.toHexString(16) + "," + Integer.toHexString(x) + " x:" + x);
 				//neural_test();
-				String svm_test_result = svm_test();
-				tv.setText("button2 onclick \n svm_result: " + svm_test_result);
+				//String svm_test_result = svm_test();
+				//tv.setText("button2 onclick \n svm_result: " + svm_test_result);
 			}else if(v == button5){
 				if(type == 0){
 					tv.setText("Train NN ");
@@ -611,7 +618,7 @@ public class HeadWear extends Activity {
 		switch(id){
 			case R.id.menu_scan:{
 				if(!mBLEDeviceConnected){
-					boolean inTest = DataHandlerService.simulation;
+					boolean inTest = false;
 					if(inTest){
 						Intent sendIntent = new Intent(BLEDevice.BLE_CONNECT_DEVICE);
 						sendIntent.putExtra(BLEDevice.BLE_DEVICE_NAME, "a");

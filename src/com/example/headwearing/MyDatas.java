@@ -8,7 +8,7 @@ import libsvm.svm_parameter;
 import libsvm.svm_node;
 
 class MyDatas{
-	public static int LEN_OF_SIGNAL_DATA = 200;
+	public static int LEN_OF_SIGNAL_DATA = 120;
 	public static int HALF_OF_SIGNAL_DATA = LEN_OF_SIGNAL_DATA / 2;
 	public static int FEATURE_NUM = 12;
 	public static String TAG = "MyDatas ";
@@ -115,6 +115,7 @@ class MyDatas{
 			meanValue();
 			nVariance();
 			standardDeviation();
+			skewness();
 			kurtosis();
 			correlation();
 			using = false;
@@ -315,7 +316,7 @@ class MyDatas{
 			float cost = 0f;
 			for(int i = 0; i < iteration; i++){
 				cost = costFunction();
-				MyLog.i("NeuralNetwork.begin","cost: " + cost);
+				MyLog.i("NeuralNetwork.begin","iter:"+i+" cost: " + cost);
 			}
 		}
 		
@@ -552,7 +553,7 @@ class MyDatas{
 		public static final int layer2_num = 10;
 		public static final int layer3_num = 5;
 		public static final float lambda = 1f;
-		public float alpha = 0.25f;
+		public float alpha = 0.03f;
 		
 		public float[][] theta1, theta1_grad; // 13 * 10
 		public float[][] theta2, theta2_grad; // 11 * 5
@@ -665,7 +666,7 @@ class MyDatas{
 			for(int i = 0; i < iteration; i++){
 				cost = nnCostFunction();
 				MyLog.i("nnCostFunction", "cost: " + cost);
-				if(iteration == 50)alpha = 0.1f;
+				if(iteration == 50)alpha = 0.01f;
 //				if(iteration == 500)alpha = alpha / 10;
 //				if(iteration == 1500)alpha = alpha / 10;
 				theta2 = metricMinus(theta2, theta2_grad, alpha);

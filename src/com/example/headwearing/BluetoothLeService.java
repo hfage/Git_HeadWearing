@@ -172,7 +172,12 @@ public class BluetoothLeService extends Service {
             //intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
             //MyLog.i("string_builder_data: ", stringBuilder.toString());
 //          intent.putExtra("data", stringBuilder.toString());
-            sendBuffer.add(stringBuilder.toString());
+            String s = stringBuilder.toString();
+            if(s.length() == 2 + 6 * DataHandlerService.LEN_OF_RECEIVED_DATA){
+            	sendBuffer.add(stringBuilder.toString());
+            }else{
+            	MyLog.i("BluetoothLeService", "bluetoothleservice data.length != 32" + s);
+            }
         }
         if(sendBuffer.size() == DataHandlerService.BUFFER_SIZE){
         	intent.putExtra("data", sendBuffer);

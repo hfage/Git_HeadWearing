@@ -33,12 +33,12 @@ import android.widget.Toast;
 
 public class DataHandlerService extends Service{
 	public boolean DEBUG = true;
-	public static boolean simulation = true;
+	public static boolean simulation = false;
 	public boolean train_nn = false;
 	public boolean train_svm = false;
 	public boolean isCalculate = false;
 	public static int LEN_OF_RECEIVED_DATA = 5;
-	public static int BUFFER_SIZE = 50;
+	public static int BUFFER_SIZE = 12;
 	private final static String TAG = "testDataHandlerSerivce";
 	public final static String DATA_SIMULATION = "DATA SIMULATION";
 	public final static String DATA_RECEIVE = "DATA RECEIVE";
@@ -248,12 +248,16 @@ public class DataHandlerService extends Service{
 		ArrayList<Integer> array_list_y = new ArrayList<Integer>();
 		for(int j = 1; j <= HeadWear.LABEL_NUM ; j++)
 		{
-			sql = "select * from acceleration_data where label = " + j;
+			sql = "select * from acceleration_data where label = " + j + " limit 2600";
 			c = sqlitedb.rawQuery(sql, new String[]{});
 			int k = 0;
+			for(int a = 0; a < 200; a++){
+				// 去除数据前面部分
+				c.moveToNext();
+			}
 	        while(c.moveToNext())
 	        {
-	        	MyLog.i("kkkkkk", "kkkkk:" + k);
+//	        	MyLog.i("kkkkkk", "kkkkk:" + k);
 	        	k++;
 	        	data = c.getString(c.getColumnIndex("data"));
 	        	if(!simulation){
@@ -266,7 +270,7 @@ public class DataHandlerService extends Service{
 	    				feature = getFeature(x, y, z);
 	    				if(feature != null){
 	    					array_list_x.add(feature);
-	    					array_list_y.add(i);
+	    					array_list_y.add(j);
 	    				}
 	    			}
 	    		}else{
@@ -280,7 +284,7 @@ public class DataHandlerService extends Service{
 	    				if(feature != null){
 	    					MyLog.i("DataH", "feature != null");
 	    					array_list_x.add(feature);
-	    					array_list_y.add(i);
+	    					array_list_y.add(j);
 	    				}
 	    			}
 	    		}//if(!simulation)
@@ -303,10 +307,8 @@ public class DataHandlerService extends Service{
 				}
 			}
 		}
-//		mNeuralNetwork.view(X);
-//		mNeuralNetwork.view(Y);
 		mNeuralNetwork.setDatas(X,Y);
-		mNeuralNetwork.train(500);
+		mNeuralNetwork.train(5000);
 		MyLog.i("datah", "trainNN finish. reset data1, data2");
 		data1.resetDatas();
 		data2.resetDatas();
@@ -327,8 +329,12 @@ public class DataHandlerService extends Service{
 		ArrayList<Integer> array_list_y = new ArrayList<Integer>();
 		for(int j = 1; j <= HeadWear.LABEL_NUM ; j++)
 		{
-			sql = "select * from acceleration_data where label = " + j;
+			sql = "select * from acceleration_data where label = " + j + " limit 2600";
 			c = sqlitedb.rawQuery(sql, new String[]{});
+			for(int a = 0; a < 200; a++){
+				// 去除数据前面部分
+				c.moveToNext();
+			}
 			int k = 0;
 	        while(c.moveToNext())
 	        {
@@ -345,7 +351,7 @@ public class DataHandlerService extends Service{
 	    				feature = getFeature(x, y, z);
 	    				if(feature != null){
 	    					array_list_x.add(feature);
-	    					array_list_y.add(i);
+	    					array_list_y.add(j);
 	    				}
 	    			}
 	    		}else{
@@ -359,7 +365,7 @@ public class DataHandlerService extends Service{
 	    				if(feature != null){
 	    					MyLog.i("DataH", "feature != null");
 	    					array_list_x.add(feature);
-	    					array_list_y.add(i);
+	    					array_list_y.add(j);
 	    				}
 	    			}
 	    		}//if(!simulation)
@@ -393,7 +399,7 @@ public class DataHandlerService extends Service{
 		float[] f = getFeature(x, y, z);
 		if(f != null){
 			int pred = mNeuralNetwork.predict(f);
-			MyLog.i("DataHandlerService.predict", "predict:" + pred);
+			MyLog.i("DataHandlerService.predict", "predictNN:" + pred);
 		}
 	}
 	
@@ -407,18 +413,23 @@ public class DataHandlerService extends Service{
 	}
 	
 	public String translateData(String data){
-		MyLog.i("DataH", "translateData: " + data);
+		MyLog.i("DataH", "translateData begin : " + data);
 		String s = "";
 		int index = 0;
 		s += String.valueOf(data.charAt(0)) + String.valueOf(data.charAt(1));
 		for(index = 2; index < 2 + 6 * LEN_OF_RECEIVED_DATA; index += 2){
-			int x = Integer.parseInt(String.valueOf(data.charAt(index)) + String.valueOf(data.charAt(index)),16);
+			int x = Integer.parseInt(String.valueOf(data.charAt(index)) + String.valueOf(data.charAt(index + 1)),16);
 			if(x >= 128){
 				x = x - 256;
 			}
 			x += 128;
-			s += Integer.toHexString(x);
+			if(x < 16){
+				s += "0" + Integer.toHexString(x);
+			}else{
+				s += Integer.toHexString(x);
+			}
 		}
+		MyLog.i("DataH", "translateData result: " + s);
 		return s;
 	}
 	 
@@ -459,7 +470,7 @@ public class DataHandlerService extends Service{
 							String data = "";
 							for(int i = 0; i < BUFFER_SIZE; i++){
 								data = array_list_data.get(i);
-								data = translateData(data);
+								//data = translateData(data);
 								dataHandler(data);
 							}
 						}else{
@@ -494,7 +505,8 @@ public class DataHandlerService extends Service{
 							String data = "";
 							for(int i = 0; i < BUFFER_SIZE; i++){
 								data = array_list_data.get(i);
-								dataHandler(data);
+								String s = translateData(data);
+								dataHandler(s);
 							}
 						}else{
 							MyLog.i("DataH", "calculating");
