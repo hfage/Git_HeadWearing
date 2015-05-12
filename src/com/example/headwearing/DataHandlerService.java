@@ -167,6 +167,7 @@ public class DataHandlerService extends Service{
 				if(train_svm){
 					predictSVM(x[i], y[i], z[i]);
 				}
+				//thresholdPredict(x[i], y[i], z[i]);
 			}
 		}else{
 			String[] data_signal = new String[LEN_OF_RECEIVED_DATA];
@@ -307,8 +308,9 @@ public class DataHandlerService extends Service{
 				}
 			}
 		}
+		MyLog.i("DataH", "Xsize:" + X[0].length + " Ysize:" + Y[0].length);
 		mNeuralNetwork.setDatas(X,Y);
-		mNeuralNetwork.train(5000);
+		mNeuralNetwork.train(1000);
 		MyLog.i("datah", "trainNN finish. reset data1, data2");
 		data1.resetDatas();
 		data2.resetDatas();
@@ -327,7 +329,7 @@ public class DataHandlerService extends Service{
 		float[] feature;
 		ArrayList<float[]> array_list_x = new ArrayList<float[]>();
 		ArrayList<Integer> array_list_y = new ArrayList<Integer>();
-		for(int j = 1; j <= HeadWear.LABEL_NUM ; j++)
+		for(int j = 1; j <= HeadWear.LABEL_NUM  ; j++)
 		{
 			sql = "select * from acceleration_data where label = " + j + " limit 2600";
 			c = sqlitedb.rawQuery(sql, new String[]{});
@@ -336,9 +338,10 @@ public class DataHandlerService extends Service{
 				c.moveToNext();
 			}
 			int k = 0;
+			thresholdReset();
 	        while(c.moveToNext())
 	        {
-	        	MyLog.i("kkkkkk", "kkkkk:" + k);
+//	        	MyLog.i("kkkkkk", "kkkkk:" + k);
 	        	k++;
 	        	data = c.getString(c.getColumnIndex("data"));
 	        	if(!simulation){
@@ -348,6 +351,7 @@ public class DataHandlerService extends Service{
 	    				x = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
 	    				y = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
 	    				z = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
+//	    				thresholdTrain(x, y, z);
 	    				feature = getFeature(x, y, z);
 	    				if(feature != null){
 	    					array_list_x.add(feature);
@@ -369,9 +373,13 @@ public class DataHandlerService extends Service{
 	    				}
 	    			}
 	    		}//if(!simulation)
+	        	
 	        }//while(c.moveToNext())
+	        thresholdResult();
 	        c.close();
 		}//for(int j = 1; j <= HeadWear.LABEL_NUM; j++)
+		
+//		
 		float[][] X = new float[array_list_x.size()][MyDatas.FEATURE_NUM];
 		for(int i = 0; i < array_list_x.size(); i++){
 			X[i] = array_list_x.get(i);
@@ -395,6 +403,138 @@ public class DataHandlerService extends Service{
 		data2.resetDatas();
 	}
 	
+	class MySVMData{
+		ArrayList<float[]> data_x = new ArrayList<float[]>();
+		ArrayList<Integer> data_y = new ArrayList<Integer>();
+	}
+	
+	float threshold_sum_x = 0f;
+	float threshold_sum_y = 0f;
+	float threshold_sum_z = 0f;
+	float threshold_min_x = 256f;
+	float threshold_min_y = 256f;
+	float threshold_min_z = 256f;
+	float threshold_max_x = 0f;
+	float threshold_max_y = 0f;
+	float threshold_max_z = 0f;
+	int threshold_num = 0;
+	public void thresholdReset(){
+		threshold_sum_x = 0f;
+		threshold_sum_y = 0f;
+		threshold_sum_z = 0f;
+		threshold_min_x = 256f;
+		threshold_min_y = 256f;
+		threshold_min_z = 256f;
+		threshold_max_x = 0f;
+		threshold_max_y = 0f;
+		threshold_max_z = 0f;
+		threshold_num = 0;
+	}
+	
+	public void thresholdTrain(float x, float y, float z){
+		threshold_num ++;
+		threshold_sum_x += x;
+		threshold_sum_y += y;
+		threshold_sum_z += z;
+		if(x < threshold_min_x) threshold_min_x = x;
+		if(y < threshold_min_y) threshold_min_y = y;
+		if(z < threshold_min_z) threshold_min_z = z;
+		if(x > threshold_max_x) threshold_max_x = x;
+		if(y > threshold_max_y) threshold_max_y = y;
+		if(z > threshold_max_z) threshold_max_z = z;
+	}
+	
+	public void thresholdResult(){
+		MyLog.i("DataH", "thresholdResult, num:" + threshold_num );
+		MyLog.i("DataH", "thresholdResult, max :" + threshold_max_x + "," + threshold_max_y + "," + threshold_max_z + "," );
+		MyLog.i("DataH", "thresholdResult, min :" + threshold_min_x + "," + threshold_min_y + "," + threshold_min_z + "," );
+		MyLog.i("DataH", "thresholdResult, mean:" + threshold_sum_x / threshold_num + "," + threshold_sum_y / threshold_num + "," + threshold_sum_z / threshold_num + "," );
+	}
+	
+	//收集1分钟的数据，用以计算
+	int begin = 0; // = 10时 计算
+	ArrayList<Float> array_predict_x = new ArrayList<Float>();
+	ArrayList<Float> array_predict_y = new ArrayList<Float>();
+	ArrayList<Float> array_predict_z = new ArrayList<Float>();
+//	public boolean ok = false;
+	public void thresholdPredict(float x, float y, float z){
+		
+		if(array_predict_x.size() == 60){
+			array_predict_x.remove(0);
+			array_predict_y.remove(0);
+			array_predict_z.remove(0);
+			begin++;
+//			ok = true;
+		}
+		array_predict_x.add(x);
+		array_predict_y.add(y);
+		array_predict_z.add(z);
+		if(begin >= 10){
+			begin = 0;
+			float max_x = 0f;
+			float max_y = 0f;
+			float max_z = 0f;
+			float min_x = 256f;
+			float min_y = 256f;
+			float min_z = 256f;
+			float mean_x = 0f;
+			float mean_y = 0f;
+			float mean_z = 0f;
+			float sum_x = 0f;
+			float sum_y = 0f;
+			float sum_z = 0f;
+			float xx,yy,zz;
+			for(int i = 50; i < 60; i++){
+				xx = array_predict_x.get(i);
+				yy = array_predict_y.get(i);
+				zz = array_predict_z.get(i);
+				sum_x += xx;
+				sum_y += yy;
+				sum_z += zz;
+				if(xx > max_x) max_x = xx;
+				if(yy > max_y) max_y = yy;
+				if(zz > max_z) max_z = zz;
+				if(xx < min_x) min_x = xx;
+				if(yy < min_y) min_y = yy;
+				if(zz < min_z) min_z = zz;
+			}
+			mean_x = sum_x / 10;
+			mean_y = sum_y / 10;
+			mean_z = sum_z / 10;
+			float special_max_y = 0f;
+			float special_min_y = 256f;
+			for(int i = 0; i < 60; i++){
+				xx = array_predict_x.get(i);
+				yy = array_predict_y.get(i);
+				zz = array_predict_z.get(i);
+				if(yy > special_max_y) special_max_y = yy;
+				if(yy < special_min_y) special_min_y = yy;
+			}
+			//  开始预测
+			int mypred = 0;
+			float delta = 10;
+			if(mean_x < 65.9 + delta && mean_x > 65.9 - delta && mean_y < 126.9 + delta && mean_y > 126.9 - delta && mean_z < 133.2 + delta && mean_z > 133.2 - delta){
+				mypred = 1;
+			}
+			if(mean_x < 91.5 + delta && mean_x > 91.5 - delta && mean_y < 59.5 + delta && mean_y > 59.5 - delta && mean_z < 152.1 + delta && mean_z > 152.1 - delta){
+				mypred = 2;
+			}
+			if(mean_x < 91.7 + delta && mean_x > 91.7 - delta && mean_y < 97.7 + delta && mean_y > 97.7 - delta && mean_z < 194.5 + delta && mean_z > 194.5 - delta){
+				mypred = 3;
+			}
+			if(mean_x < 106.8 + delta && mean_x > 106.8 - delta && mean_y < 93.3 + delta && mean_y > 93.3 - delta && mean_z < 91.5 + delta && mean_z > 91.5 - delta){
+				mypred = 4;
+			}
+			if(mean_x < 64.2 + delta && mean_x > 54.2 - delta  && mean_z < 136.8 + delta && mean_z > 136.8 - delta){
+				if(special_max_y - special_min_y > 40)
+					mypred = 5;
+			}
+			if(mypred != 0)
+				MyLog.i("DataH", "threshold predis:" + mypred);
+		}
+		
+	}
+	
 	public void predictNN(float x, float y, float z){
 		float[] f = getFeature(x, y, z);
 		if(f != null){
@@ -410,6 +550,45 @@ public class DataHandlerService extends Service{
 			int pred = (int) svm.svm_predict(model, mPredict);
 			MyLog.i("DataHandlerService.predictSVM", "predictSVM:" + pred);
 		}
+	}
+	
+	public MySVMData removeBadData(ArrayList<float[]> lx, ArrayList<Integer> ly){
+		// 去掉各特征值中最大和最小的数
+		
+		MySVMData mySVMData = new MySVMData();
+		int bad_num = 5;
+		ArrayList<float[]> list = new ArrayList<float[]>();
+		ArrayList<float[]> listy = new ArrayList<float[]>();
+		for(int a = 0; a < ly.size(); a++)
+		{
+			for(int b = 0; b < ly.size() / 5; b++){
+				list.add(lx.get(a));
+			}
+			for(int i = 0; i < bad_num; i++){
+				for(int k = 0; k < list.get(0).length; k++){
+					float max = list.get(0)[k];
+					float min = list.get(0)[k];
+					int remove_index1 = -1;
+					int remove_index2 = -1;
+					for(int j = 1; j < list.size(); j++){
+						float data = list.get(j)[k];
+						if(data > max){
+							max = data;
+							remove_index1 = j;
+						}
+						if(data < min){
+							min = data;
+							remove_index2 = j;
+						}
+					}
+					list.remove(remove_index1);
+					list.remove(remove_index2);
+					ly.remove(remove_index1);
+					ly.remove(remove_index2);
+				}
+			}
+		}
+		return mySVMData;
 	}
 	
 	public String translateData(String data){

@@ -10,7 +10,7 @@ import libsvm.svm_node;
 class MyDatas{
 	public static int LEN_OF_SIGNAL_DATA = 120;
 	public static int HALF_OF_SIGNAL_DATA = LEN_OF_SIGNAL_DATA / 2;
-	public static int FEATURE_NUM = 12;
+	public static int FEATURE_NUM = 6;
 	public static String TAG = "MyDatas ";
 	public class SignalData{
 		ArrayList<Float> data_x = new ArrayList<Float>();
@@ -41,6 +41,11 @@ class MyDatas{
 		public boolean used = false;
 		public boolean using = false;
 		public int error_time = 5;
+		
+		float delta_x = 0f;
+		float delta_y = 0f;
+		float delta_z = 0f;
+		
 		public boolean enData(float x, float y, float z){
 			//MyLog.i("MyDatas.endData", "enData ");
 			if(!using){
@@ -113,6 +118,7 @@ class MyDatas{
 			using = true;
 			sum();
 			meanValue();
+			delta();
 			nVariance();
 			standardDeviation();
 			skewness();
@@ -234,22 +240,52 @@ class MyDatas{
 			return true;
 		}
 	
+		public boolean delta(){
+			float max_x = 0f;
+			float max_y = 0f;
+			float max_z = 0f;
+			float min_x = 256f;
+			float min_y = 256f;
+			float min_z = 256f;
+			float xx,yy,zz;
+			for(int i = 0; i < LEN_OF_SIGNAL_DATA; i++){
+				xx = data_x.get(i);
+				yy = data_y.get(i);
+				zz = data_z.get(i);
+				if(xx > max_x) max_x = xx;
+				if(yy > max_y) max_y = yy;
+				if(zz > max_z) max_z = zz;
+				if(xx < min_x) min_x = xx;
+				if(yy < min_y) min_y = yy;
+				if(zz < min_z) min_z = zz;
+			}
+			delta_x = max_x - min_x;
+			delta_y = max_y - min_y;
+			delta_z = max_z - min_z;
+			return true;
+		}
+		
 		public float[] feature2list(){
-			float[] f = new float[12];
-			f[0] = standard_deviation_x_value;
-			f[1] = standard_deviation_y_value;
-			f[2] = standard_deviation_z_value;
-			f[3] = skewness_x_value;
-			f[4] = skewness_y_value;
-			f[5] = skewness_z_value;
-			f[6] = kurtosis_x_value;
-			f[7] = kurtosis_y_value;
-			f[8] = kurtosis_z_value;
-			f[9] = correlation_x_y_value;
-			f[10] = correlation_y_z_value;
-			f[11] = correlation_z_x_value;
+			float[] f = new float[FEATURE_NUM];
+			f[0] = mean_x_value; //standard_deviation_x_value;
+			f[1] = mean_y_value; //standard_deviation_y_value;
+			f[2] = mean_z_value; //standard_deviation_z_value;
+			f[3] = delta_x;
+			f[4] = delta_y;
+			f[5] = delta_z;
+			
+			
+//			f[3] = skewness_x_value;
+//			f[4] = skewness_y_value;
+//			f[5] = skewness_z_value;
+//			f[6] = kurtosis_x_value;
+//			f[7] = kurtosis_y_value;
+//			f[8] = kurtosis_z_value;
+//			f[9] = correlation_x_y_value;
+//			f[10] = correlation_y_z_value;
+//			f[11] = correlation_z_x_value;
 			String s = "";
-			for(int i = 0; i < 12; i++){
+			for(int i = 0; i < FEATURE_NUM; i++){
 				s += "f[" + i + "]:" + f[i] + " &";
 			}
 			MyLog.i("MyDatas.feature2list",s);
@@ -549,11 +585,11 @@ class MyDatas{
 	}
 
 	public class NeuralNetworkML{
-		public static final int layer1_num = 12;
-		public static final int layer2_num = 10;
-		public static final int layer3_num = 5;
-		public static final float lambda = 1f;
-		public float alpha = 0.03f;
+		public  int layer1_num = 12;
+		public  int layer2_num = 10;
+		public  int layer3_num = 5;
+		public  float lambda = 1f;
+		public float alpha = 0.3f;
 		
 		public float[][] theta1, theta1_grad; // 13 * 10
 		public float[][] theta2, theta2_grad; // 11 * 5
@@ -645,6 +681,7 @@ class MyDatas{
 		}
 		
 		public void setDatas(float[][] input_x, float[][] input_y){
+			layer1_num = input_x[0].length;
 			float[][] new_x = new float[input_x.length][layer1_num + 1];
 			for(int i = 0; i < input_x.length; i++){
 				new_x[i][0] = 1;
@@ -654,6 +691,7 @@ class MyDatas{
 			}
 			X = new_x;
 			y = input_y;
+			
 		}
 		
 		public void train(int iteration){
@@ -665,8 +703,8 @@ class MyDatas{
 			float cost = 0f;
 			for(int i = 0; i < iteration; i++){
 				cost = nnCostFunction();
-				MyLog.i("nnCostFunction", "cost: " + cost);
-				if(iteration == 50)alpha = 0.01f;
+				MyLog.i("nnCostFunction", "iter:" + i + "cost: " + cost);
+//				if(iteration == 50)alpha = 0.1f;
 //				if(iteration == 500)alpha = alpha / 10;
 //				if(iteration == 1500)alpha = alpha / 10;
 				theta2 = metricMinus(theta2, theta2_grad, alpha);
@@ -727,6 +765,8 @@ class MyDatas{
 			float[][] z3 = metricTimes(a2, theta2);  // m * 5
 			float[][] a3 = sigmod(z3); // m * 5
 			float[][] h = a3;
+			float sum = sumMetric( metricPlus(metricDotTimes(y, logMetric(h)) , metricDotTimes(metricMinus(onesMetric(y),y), logMetric(metricMinus(onesMetric(h),h ))))  );
+			J = (-1f / m) * sum;
 			for(int i = 0; i < h.length; i++){
 				for(int j = 0; j < h[0].length; j++){
 					if(h[i][j] > 1f || h[i][j] < 0){
