@@ -133,7 +133,7 @@ public class HeadWear extends Activity {
 		String[] service_string = new String[9];
 		String[] characteristic_string = new String[9];
 		String[] label_string = new String[9];
-		String[] type_string = {"NN","SVM"};
+		String[] type_string = {"NN","SVM","THRESHOLD"};
 		for(int i = 0; i < 9; i++){
 			service_string[i] = String.valueOf(i);
 			characteristic_string[i] = String.valueOf(i);
@@ -352,6 +352,9 @@ public class HeadWear extends Activity {
 				}else if(type == 1){
 					tv.setText("Train SVM");
 					mDataHandlerService.trainSVM();
+				}else if(type == 2){
+					tv.setText("Train threshold");
+					mDataHandlerService.trainThreshold();
 				}
 			}else{
 				// 

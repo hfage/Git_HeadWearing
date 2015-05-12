@@ -8,9 +8,9 @@ import libsvm.svm_parameter;
 import libsvm.svm_node;
 
 class MyDatas{
-	public static int LEN_OF_SIGNAL_DATA = 120;
+	public static int LEN_OF_SIGNAL_DATA = 200;
 	public static int HALF_OF_SIGNAL_DATA = LEN_OF_SIGNAL_DATA / 2;
-	public static int FEATURE_NUM = 6;
+	public static int FEATURE_NUM = 10;
 	public static String TAG = "MyDatas ";
 	public class SignalData{
 		ArrayList<Float> data_x = new ArrayList<Float>();
@@ -45,6 +45,9 @@ class MyDatas{
 		float delta_x = 0f;
 		float delta_y = 0f;
 		float delta_z = 0f;
+		float boxingyinzi_x = 0f;
+		float boxingyinzi_y = 0f;
+		float boxingyinzi_z = 0f;
 		
 		public boolean enData(float x, float y, float z){
 			//MyLog.i("MyDatas.endData", "enData ");
@@ -119,6 +122,8 @@ class MyDatas{
 			sum();
 			meanValue();
 			delta();
+			boxingyinzi();
+			special();
 			nVariance();
 			standardDeviation();
 			skewness();
@@ -265,16 +270,106 @@ class MyDatas{
 			return true;
 		}
 		
+		public boolean boxingyinzi(){
+			float max_x = 0f;
+			float max_y = 0f;
+			float max_z = 0f;
+			float min_x = 256f;
+			float min_y = 256f;
+			float min_z = 256f;
+			float xx,yy,zz;
+			for(int i = 0; i < HALF_OF_SIGNAL_DATA; i++){
+				xx = data_x.get(i);
+				yy = data_y.get(i);
+				zz = data_z.get(i);
+				if(xx > max_x) max_x = xx;
+				if(yy > max_y) max_y = yy;
+				if(zz > max_z) max_z = zz;
+				if(xx < min_x) min_x = xx;
+				if(yy < min_y) min_y = yy;
+				if(zz < min_z) min_z = zz;
+			}
+			boxingyinzi_x = max_x - min_x;
+			boxingyinzi_y = max_y - min_y;
+			boxingyinzi_z = max_z - min_z;
+			max_x = 0f;
+			max_y = 0f;
+			max_z = 0f;
+			min_x = 256f;
+			min_y = 256f;
+			min_z = 256f;
+			
+			for(int i = HALF_OF_SIGNAL_DATA; i < LEN_OF_SIGNAL_DATA; i++){
+				xx = data_x.get(i);
+				yy = data_y.get(i);
+				zz = data_z.get(i);
+				if(xx > max_x) max_x = xx;
+				if(yy > max_y) max_y = yy;
+				if(zz > max_z) max_z = zz;
+				if(xx < min_x) min_x = xx;
+				if(yy < min_y) min_y = yy;
+				if(zz < min_z) min_z = zz;
+			}
+			boxingyinzi_x += max_x - min_x;
+			boxingyinzi_y += max_y - min_y;
+			boxingyinzi_z += max_z - min_z;
+			return true;
+		}
+		
+		public float special_y = 0f;
+		public void special(){
+			int up = 0;
+			int down = 0;
+			int len = 15;
+			for(int i = 0; i < LEN_OF_SIGNAL_DATA - len - 1; i++){
+				for(int j = i; j < i + len + 1; j++){
+					if(data_y.get(j) > data_y.get(j + 1))
+						break;
+					if(j == i + len){
+						up++;
+					}
+				}
+				for(int j = i; j < i + len + 1; j++){
+					if(data_y.get(j) < data_y.get(j + 1))
+						break;
+					if(j == i + len){
+						down++;
+					}
+				}
+			}
+			special_y = up + down;
+		}
+		
 		public float[] feature2list(){
 			float[] f = new float[FEATURE_NUM];
+			boolean inTest = false;
+			if(inTest){
+				f = new float[300];
+				for(int i = 0; i < 100; i++){
+					f[i] = data_x.get(i);
+				}
+				for(int i = 100; i < 200; i++){
+					f[i] = data_y.get(i-100);
+				}
+				for(int i = 200; i < 300; i++){
+					f[i] = data_z.get(i-200);
+				}
+				//layer2_num = 25;
+			}else{
+//			float[] f = new float[FEATURE_NUM];
 			f[0] = mean_x_value; //standard_deviation_x_value;
 			f[1] = mean_y_value; //standard_deviation_y_value;
 			f[2] = mean_z_value; //standard_deviation_z_value;
 			f[3] = delta_x;
 			f[4] = delta_y;
 			f[5] = delta_z;
-			
-			
+			f[6] = mean_x_value - mean_y_value;// Math.abs(correlation_x_y_value);
+			f[7] = mean_y_value - mean_z_value;// Math.abs(correlation_y_z_value);
+			f[8] = mean_z_value - mean_x_value;// Math.abs(correlation_z_x_value);
+			//f[9] = boxingyinzi_x;
+			f[9] = boxingyinzi_y;
+			f[10] = special_y;
+			//f[11] = boxingyinzi_z;
 //			f[3] = skewness_x_value;
 //			f[4] = skewness_y_value;
 //			f[5] = skewness_z_value;
@@ -289,6 +384,7 @@ class MyDatas{
 				s += "f[" + i + "]:" + f[i] + " &";
 			}
 			MyLog.i("MyDatas.feature2list",s);
+			}
 			return f;
 		}
 	}
@@ -589,7 +685,7 @@ class MyDatas{
 		public  int layer2_num = 10;
 		public  int layer3_num = 5;
 		public  float lambda = 1f;
-		public float alpha = 0.3f;
+		public float alpha = 0.1f;
 		
 		public float[][] theta1, theta1_grad; // 13 * 10
 		public float[][] theta2, theta2_grad; // 11 * 5
@@ -603,12 +699,12 @@ class MyDatas{
 			theta2_grad = new float[layer2_num + 1][layer3_num];
 			for(int i = 0; i < layer1_num + 1; i++){
 				for(int j = 0; j < layer2_num ; j++){
-					theta1[i][j] = (float) ((Math.random() - 0.0) * 0.1);
+					theta1[i][j] = (float) ((Math.random() - 0.5) * 0.1);
 				}
 			}
 			for(int i = 0; i < layer2_num + 1; i++){
 				for(int j = 0; j < layer3_num ; j++){
-					theta2[i][j] = (float) ((Math.random() - 0.0) * 0.1);
+					theta2[i][j] = (float) ((Math.random() - 0.5) * 0.1);
 				}
 			}
 		}
@@ -703,9 +799,16 @@ class MyDatas{
 			float cost = 0f;
 			for(int i = 0; i < iteration; i++){
 				cost = nnCostFunction();
+				if(HeadWear.label == 6){
+					break;
+				}
+				if(cost < 1.7){
+					Log.i("MyDatas", "cost < 2");
+					//break;
+				}
 				MyLog.i("nnCostFunction", "iter:" + i + "cost: " + cost);
-//				if(iteration == 50)alpha = 0.1f;
-//				if(iteration == 500)alpha = alpha / 10;
+				if(iteration == 50)alpha = 0.1f;
+//				if(iteration == 500)alpha = 0.01f;
 //				if(iteration == 1500)alpha = alpha / 10;
 				theta2 = metricMinus(theta2, theta2_grad, alpha);
 				theta1 = metricMinus(theta1, theta1_grad, alpha);
