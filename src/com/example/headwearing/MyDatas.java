@@ -1,5 +1,8 @@
 package com.example.headwearing;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import android.util.Log;
@@ -10,7 +13,7 @@ import libsvm.svm_node;
 class MyDatas{
 	public static int LEN_OF_SIGNAL_DATA = 200;
 	public static int HALF_OF_SIGNAL_DATA = LEN_OF_SIGNAL_DATA / 2;
-	public static int FEATURE_NUM = 10;
+	public static int FEATURE_NUM = 12;
 	public static String TAG = "MyDatas ";
 	public class SignalData{
 		ArrayList<Float> data_x = new ArrayList<Float>();
@@ -48,6 +51,9 @@ class MyDatas{
 		float boxingyinzi_x = 0f;
 		float boxingyinzi_y = 0f;
 		float boxingyinzi_z = 0f;
+		float angle_x = 0f;
+		float angle_y = 0f;
+		float angle_z = 0f;
 		
 		public boolean enData(float x, float y, float z){
 			//MyLog.i("MyDatas.endData", "enData ");
@@ -106,6 +112,9 @@ class MyDatas{
 			correlation_x_y_value = 0f;
 			correlation_y_z_value = 0f;
 			correlation_z_x_value = 0f;
+			angle_x = 0f;
+			angle_y = 0f;
+			angle_z = 0f;
 			//used = false;
 			using = false;
 			error_time =  5;
@@ -123,6 +132,7 @@ class MyDatas{
 			meanValue();
 			delta();
 			boxingyinzi();
+			angle();
 			special();
 			nVariance();
 			standardDeviation();
@@ -148,6 +158,18 @@ class MyDatas{
 				MyLog.w("ViewFeature" + "correlationValue:", "" + correlation_y_z_value);
 				MyLog.w("ViewFeature" + "correlationValue:", "" + correlation_z_x_value);
 			}
+		}
+		
+		public void angle(){
+			for(int i = 0; i < LEN_OF_SIGNAL_DATA; i++){
+				angle_x += Math.atan(data_x.get(i) / (Math.pow(data_y.get(i), 2) + Math.pow(data_z.get(i), 2) ));
+				angle_y += Math.atan(data_y.get(i) / (Math.pow(data_x.get(i), 2) + Math.pow(data_z.get(i), 2) ));
+				angle_z += Math.atan(Math.sqrt((Math.pow(data_x.get(i), 2) + Math.pow(data_y.get(i), 2) )) / data_z.get(i));
+			}
+			angle_x = angle_x / LEN_OF_SIGNAL_DATA;
+			angle_y = angle_y / LEN_OF_SIGNAL_DATA;
+			angle_z = angle_z / LEN_OF_SIGNAL_DATA;
+			
 		}
 		
 		public boolean correlation(){
@@ -363,12 +385,18 @@ class MyDatas{
 			f[3] = delta_x;
 			f[4] = delta_y;
 			f[5] = delta_z;
-			f[6] = mean_x_value - mean_y_value;// Math.abs(correlation_x_y_value);
-			f[7] = mean_y_value - mean_z_value;// Math.abs(correlation_y_z_value);
-			f[8] = mean_z_value - mean_x_value;// Math.abs(correlation_z_x_value);
-			//f[9] = boxingyinzi_x;
-			f[9] = boxingyinzi_y;
-			f[10] = special_y;
+			f[6] = angle_x;
+			f[7] = angle_y;
+			f[8] = angle_z;
+			f[9] = correlation_x_y_value;
+			f[10] = correlation_y_z_value;
+			f[11] = correlation_z_x_value;
+//			f[6] = mean_x_value - mean_y_value;// Math.abs(correlation_x_y_value);
+//			f[7] = mean_y_value - mean_z_value;// Math.abs(correlation_y_z_value);
+//			f[8] = mean_z_value - mean_x_value;// Math.abs(correlation_z_x_value);
+//			//f[9] = boxingyinzi_x;
+//			f[9] = boxingyinzi_y;
+//			f[10] = special_y;
 			//f[11] = boxingyinzi_z;
 //			f[3] = skewness_x_value;
 //			f[4] = skewness_y_value;
@@ -707,6 +735,191 @@ class MyDatas{
 					theta2[i][j] = (float) ((Math.random() - 0.5) * 0.1);
 				}
 			}
+			theta1[0][0] = 0.0954f;
+			theta1[0][1] = 0.0351f;
+			theta1[0][2] = 0.093f;
+			theta1[0][3] = 0.0975f;
+			theta1[0][4] = 0.0933f;
+			theta1[0][5] = 0.0726f;
+			theta1[0][6] = 0.0552f;
+			theta1[0][7] = 0.0189f;
+			theta1[0][8] = 0.0097f;
+			theta1[0][9] = 0.0898f;
+			theta1[1][0] = 0.0108f;
+			theta1[1][1] = 0.0252f;
+			theta1[1][2] = 0.1601f;
+			theta1[1][3] = -0.2761f;
+			theta1[1][4] = -0.3198f;
+			theta1[1][5] = -0.1531f;
+			theta1[1][6] = -0.0127f;
+			theta1[1][7] = 0.0645f;
+			theta1[1][8] = 0.0089f;
+			theta1[1][9] = 0.0082f;
+			theta1[2][0] = 0.0454f;
+			theta1[2][1] = 0.0597f;
+			theta1[2][2] = 0.146f;
+			theta1[2][3] = 0.0813f;
+			theta1[2][4] = 0.1033f;
+			theta1[2][5] = -0.0575f;
+			theta1[2][6] = 0.053f;
+			theta1[2][7] = 0.2639f;
+			theta1[2][8] = 0.0377f;
+			theta1[2][9] = 0.0394f;
+			theta1[3][0] = 0.0791f;
+			theta1[3][1] = 0.1014f;
+			theta1[3][2] = -0.3012f;
+			theta1[3][3] = 0.1685f;
+			theta1[3][4] = 0.1885f;
+			theta1[3][5] = -0.1151f;
+			theta1[3][6] = 0.0839f;
+			theta1[3][7] = -0.1746f;
+			theta1[3][8] = 0.0601f;
+			theta1[3][9] = 0.0756f;
+			theta1[4][0] = 0.0003f;
+			theta1[4][1] = 0.0024f;
+			theta1[4][2] = 0.127f;
+			theta1[4][3] = 0.0076f;
+			theta1[4][4] = 0.0182f;
+			theta1[4][5] = -0.0042f;
+			theta1[4][6] = -0.0007f;
+			theta1[4][7] = -0.0621f;
+			theta1[4][8] = 0.0011f;
+			theta1[4][9] = 0.0015f;
+			theta1[5][0] = -0.0034f;
+			theta1[5][1] = 0.0022f;
+			theta1[5][2] = 0.4202f;
+			theta1[5][3] = 0.0283f;
+			theta1[5][4] = 0.0656f;
+			theta1[5][5] = -0.0029f;
+			theta1[5][6] = -0.0064f;
+			theta1[5][7] = -0.2201f;
+			theta1[5][8] = 0.0005f;
+			theta1[5][9] = 0.0013f;
+			theta1[6][0] = 0.0011f;
+			theta1[6][1] = 0.0025f;
+			theta1[6][2] = 0.0529f;
+			theta1[6][3] = 0.0004f;
+			theta1[6][4] = 0.004f;
+			theta1[6][5] = -0.0051f;
+			theta1[6][6] = 0.0006f;
+			theta1[6][7] = -0.0205f;
+			theta1[6][8] = 0.0013f;
+			theta1[6][9] = 0.0015f;
+			theta1[7][0] = 0.0f;
+			theta1[7][1] = 0.0f;
+			theta1[7][2] = 0.0001f;
+			theta1[7][3] = -0.0f;
+			theta1[7][4] = 0.0f;
+			theta1[7][5] = 0.0f;
+			theta1[7][6] = 0.0f;
+			theta1[7][7] = 0.0f;
+			theta1[7][8] = 0.0f;
+			theta1[7][9] = 0.0f;
+			theta1[8][0] = 0.0f;
+			theta1[8][1] = 0.0001f;
+			theta1[8][2] = 0.0f;
+			theta1[8][3] = 0.0001f;
+			theta1[8][4] = 0.0f;
+			theta1[8][5] = -0.0f;
+			theta1[8][6] = 0.0f;
+			theta1[8][7] = 0.0f;
+			theta1[8][8] = 0.0f;
+			theta1[8][9] = 0.0f;
+			theta1[9][0] = 0.0002f;
+			theta1[9][1] = 0.0003f;
+			theta1[9][2] = 0.0018f;
+			theta1[9][3] = -0.0014f;
+			theta1[9][4] = -0.0016f;
+			theta1[9][5] = -0.001f;
+			theta1[9][6] = 0.0001f;
+			theta1[9][7] = 0.0024f;
+			theta1[9][8] = 0.0002f;
+			theta1[9][9] = 0.0002f;
+			theta1[10][0] = 0.0001f;
+			theta1[10][1] = -0.0f;
+			theta1[10][2] = -0.0047f;
+			theta1[10][3] = -0.0003f;
+			theta1[10][4] = -0.0006f;
+			theta1[10][5] = 0.0f;
+			theta1[10][6] = 0.0001f;
+			theta1[10][7] = 0.0022f;
+			theta1[10][8] = 0.0f;
+			theta1[10][9] = -0.0f;
+			theta1[11][0] = -0.0f;
+			theta1[11][1] = 0.0f;
+			theta1[11][2] = 0.0078f;
+			theta1[11][3] = 0.0003f;
+			theta1[11][4] = 0.0008f;
+			theta1[11][5] = 0.0f;
+			theta1[11][6] = -0.0001f;
+			theta1[11][7] = -0.0031f;
+			theta1[11][8] = 0.0f;
+			theta1[11][9] = 0.0f;
+			theta1[12][0] = 0.0f;
+			theta1[12][1] = 0.0f;
+			theta1[12][2] = -0.0032f;
+			theta1[12][3] = -0.0002f;
+			theta1[12][4] = -0.0004f;
+			theta1[12][5] = -0.0f;
+			theta1[12][6] = 0.0001f;
+			theta1[12][7] = 0.001f;
+			theta1[12][8] = 0.0f;
+			theta1[12][9] = 0.0f;
+			theta2[0][0] = -2.0725f;
+			theta2[0][1] = -0.1062f;
+			theta2[0][2] = -1.9982f;
+			theta2[0][3] = -1.4264f;
+			theta2[0][4] = -2.2268f;
+			theta2[1][0] = -0.2639f;
+			theta2[1][1] = 0.3604f;
+			theta2[1][2] = -0.1298f;
+			theta2[1][3] = -0.2874f;
+			theta2[1][4] = -0.909f;
+			theta2[2][0] = -0.2612f;
+			theta2[2][1] = 0.3545f;
+			theta2[2][2] = -0.1272f;
+			theta2[2][3] = -0.2877f;
+			theta2[2][4] = -0.9206f;
+			theta2[3][0] = -3.354f;
+			theta2[3][1] = -4.1146f;
+			theta2[3][2] = -3.3978f;
+			theta2[3][3] = 4.5855f;
+			theta2[3][4] = 4.5818f;
+			theta2[4][0] = 0.8925f;
+			theta2[4][1] = -1.5736f;
+			theta2[4][2] = 0.9945f;
+			theta2[4][3] = -1.6157f;
+			theta2[4][4] = 1.1666f;
+			theta2[5][0] = 1.9023f;
+			theta2[5][1] = -3.5677f;
+			theta2[5][2] = 1.9743f;
+			theta2[5][3] = -3.0913f;
+			theta2[5][4] = 2.8841f;
+			theta2[6][0] = 0.1668f;
+			theta2[6][1] = -0.1897f;
+			theta2[6][2] = 0.1666f;
+			theta2[6][3] = -0.1909f;
+			theta2[6][4] = 0.1223f;
+			theta2[7][0] = -0.2704f;
+			theta2[7][1] = 0.3578f;
+			theta2[7][2] = -0.1478f;
+			theta2[7][3] = -0.2502f;
+			theta2[7][4] = -0.8541f;
+			theta2[8][0] = 1.0774f;
+			theta2[8][1] = 0.0013f;
+			theta2[8][2] = -1.0583f;
+			theta2[8][3] = 0.3825f;
+			theta2[8][4] = -0.8021f;
+			theta2[9][0] = -0.2602f;
+			theta2[9][1] = 0.3511f;
+			theta2[9][2] = -0.1304f;
+			theta2[9][3] = -0.2857f;
+			theta2[9][4] = -0.9158f;
+			theta2[10][0] = -0.2665f;
+			theta2[10][1] = 0.3623f;
+			theta2[10][2] = -0.133f;
+			theta2[10][3] = -0.2821f;
+			theta2[10][4] = -0.9073f;
 		}
 		
 		public void initTestData(){
@@ -787,8 +1000,63 @@ class MyDatas{
 			}
 			X = new_x;
 			y = input_y;
-			
+			File path = new File("/sdcard/dbfile/"); //数据库文件目录  
+		    File file = new File("/sdcard/dbfile/feature.txt"); //数据库文件  
+			if(!path.exists()){
+				if(path.mkdirs()){
+					MyLog.w(TAG,"mkdir succ");
+				}
+				else {
+					MyLog.w(TAG,"mkdir fail");
+				}
+			}
+			if(!file.exists()){
+				try{
+					file.createNewFile();
+				}catch(IOException e){
+					MyLog.w(TAG,"createNewFile error.");
+					e.printStackTrace();
+				}
+			}
+			String filename = "/sdcard/dbfile/feature.txt";
+			String write_str = "";
+			for(int i = 0; i < X.length; i++){
+				write_str += "[";
+				for(int j = 1; j < X[0].length; j++){
+					write_str += X[i][j] + ",";
+				}
+				write_str += "];";
+			}
+			write_str += "\n[";
+			for(int i = 0; i < y.length; i++){
+//				write_str += "[";
+				int index = 0;
+				for(int j = 0; j < y[0].length; j++){
+					if(y[i][j] == 1){
+						index = j + 1;
+						break;
+					}
+				}
+				write_str += index + ",";
+//				write_str += "];";
+			}
+			write_str += "];";
+			//writeFileSdcardFile(filename, write_str);
 		}
+		
+		public void writeFileSdcardFile(String fileName, String write_str) {
+			try {
+				FileOutputStream fout = new FileOutputStream(fileName);
+				byte[] bytes = write_str.getBytes();
+
+				fout.write(bytes);
+				fout.close();
+			}
+
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		} 
 		
 		public void train(int iteration){
 			init();
@@ -797,15 +1065,22 @@ class MyDatas{
 				initTestData();
 			}
 			float cost = 0f;
+			float cost_flag = 0f;
 			for(int i = 0; i < iteration; i++){
 				cost = nnCostFunction();
 				if(HeadWear.label == 6){
 					break;
 				}
-				if(cost < 1.7){
+				if(cost < 1){
 					Log.i("MyDatas", "cost < 2");
 					//break;
+				
+					if(Math.abs(cost - cost_flag) < 0.0001f){
+						MyLog.i("nnCostFunction", "cost - cost_flag < 0.0001f, cost:" + cost + ",cost_flag:" + cost_flag);
+						break;
+					}
 				}
+				cost_flag = cost;
 				MyLog.i("nnCostFunction", "iter:" + i + "cost: " + cost);
 				if(iteration == 50)alpha = 0.1f;
 //				if(iteration == 500)alpha = 0.01f;

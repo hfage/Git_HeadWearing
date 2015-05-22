@@ -346,7 +346,7 @@ public class DataHandlerService extends Service{
 		
 		MyLog.i("DataH", "Xsize:" + X[0].length + " Ysize:" + Y[0].length);
 		mNeuralNetwork.setDatas(X,Y);
-		mNeuralNetwork.train(1500);
+		mNeuralNetwork.train(15000);
 		MyLog.i("datah", "trainNN finish. reset data1, data2");
 		data1.resetDatas();
 		data2.resetDatas();
@@ -697,7 +697,7 @@ public class DataHandlerService extends Service{
 				mypred = 4;
 			}
 			if(mean_x < 64.2 + delta && mean_x > 54.2 - delta  && mean_z < 136.8 + delta && mean_z > 136.8 - delta){
-				if(special_max_y - special_min_y > 5)
+				if(special_max_y - special_min_y > 15)
 					if(mypred == 0)
 						mypred = 5;
 			}

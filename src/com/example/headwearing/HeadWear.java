@@ -621,7 +621,7 @@ public class HeadWear extends Activity {
 		switch(id){
 			case R.id.menu_scan:{
 				if(!mBLEDeviceConnected){
-					boolean inTest = false;
+					boolean inTest = true;
 					if(inTest){
 						Intent sendIntent = new Intent(BLEDevice.BLE_CONNECT_DEVICE);
 						sendIntent.putExtra(BLEDevice.BLE_DEVICE_NAME, "a");
