@@ -251,17 +251,17 @@ public class DataHandlerService extends Service{
 		ArrayList<Integer> array_list_predict_y = new ArrayList<Integer>();
 		for(int j = 1; j <= HeadWear.LABEL_NUM ; j++)
 		{
-			sql = "select * from acceleration_data where label = " + j + " limit 3010";
+			sql = "select * from acceleration_data where label = " + j + " order by id desc limit 12220";
 			c = sqlitedb.rawQuery(sql, new String[]{});
-			int k = 0;
+			
 			for(int a = 0; a < 200; a++){
 				// 去除数据前面部分
 				c.moveToNext();
 			}
+			int k = 0;
 	        while(c.moveToNext())
 	        {
-//	        	MyLog.i("kkkkkk", "kkkkk:" + k);
-	        	k++;
+	        	
 	        	data = c.getString(c.getColumnIndex("data"));
 	        	if(!simulation){
 	    			int d = 0;
@@ -272,7 +272,8 @@ public class DataHandlerService extends Service{
 	    				z = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
 	    				feature = getFeature(x, y, z);
 	    				if(feature != null){
-	    					if(k < 2200){
+	    					k++;
+	    					if(k <= 480){
 		    					array_list_x.add(feature);
 		    					array_list_y.add(j);
 	    					}else{
@@ -344,21 +345,21 @@ public class DataHandlerService extends Service{
 		}
 		
 		
-		MyLog.i("DataH", "Xsize:" + X[0].length + " Ysize:" + Y[0].length);
+		MyLog.i("DataH", "Xsize:" + X.length + " Ysize:" + Y[0].length);
 		mNeuralNetwork.setDatas(X,Y);
 		mNeuralNetwork.train(15000);
 		MyLog.i("datah", "trainNN finish. reset data1, data2");
 		data1.resetDatas();
 		data2.resetDatas();
 		train_nn = true;
-		totalPredictNN(X, Y);
+		MyLog.i("DataH", "Xsize:" + predictX.length + " Ysize:" + Y[0].length);
+		totalPredictNN(predictX, predictY);
 	}
 	
 	MyDatas mMyDatas = new MyDatas();
 	svm_model model;
 	public void trainSVM(){
 		MyLog.i("dataH", "train_svm");
-		
 		Cursor c;
 		String data = "";
 		String sql = "";
@@ -370,18 +371,18 @@ public class DataHandlerService extends Service{
 		ArrayList<Integer> array_list_predict_y = new ArrayList<Integer>();
 		for(int j = 1; j <= HeadWear.LABEL_NUM  ; j++)
 		{
-			sql = "select * from acceleration_data where label = " + j + " limit 3001";
+			sql = "select * from acceleration_data where label = " + j + " order by id desc limit 12220";
 			c = sqlitedb.rawQuery(sql, new String[]{});
-			for(int a = 0; a < 199; a++){
+			for(int a = 0; a < 200; a++){
 				// 去除数据前面部分
 				c.moveToNext();
 			}
 			int k = 0;
-			thresholdReset();
+//			thresholdReset();
 	        while(c.moveToNext())
 	        {
 //	        	MyLog.i("kkkkkk", "kkkkk:" + k);
-	        	k++;
+	        	
 	        	data = c.getString(c.getColumnIndex("data"));
 	        	if(!simulation){
 	    			int d = 0;
@@ -393,7 +394,8 @@ public class DataHandlerService extends Service{
 //	    				thresholdTrain(x, y, z);
 	    				feature = getFeature(x, y, z);
 	    				if(feature != null){
-	    					if(k < 2200){
+	    					k++;
+	    					if(k <= 480){
 		    					array_list_x.add(feature);
 		    					array_list_y.add(j);
 	    					}else{
@@ -419,10 +421,12 @@ public class DataHandlerService extends Service{
 	    		}//if(!simulation)
 	        	
 	        }//while(c.moveToNext())
-	        thresholdResult();
+//	        thresholdResult();
 	        c.close();
-//	        data1.resetDatas();
-//	        data2.resetDatas();
+	        data1.resetDatas();
+	        data2.resetDatas();
+	        data1.used = true;
+	        data2.used = false;
 		}//for(int j = 1; j <= HeadWear.LABEL_NUM; j++)
 //		MySVMData mdata = removeBadData(array_list_x, array_list_y);
 //		array_list_x = mdata.data_x;
@@ -465,6 +469,156 @@ public class DataHandlerService extends Service{
 		data2.resetDatas();
 		MyLog.i("dataH", "counts:" + counts[0] + counts[1] + counts[2] + counts[3] + counts[4]);
 		totalPredictSVM(predictX, predictY);
+	}
+	
+	public void trainThresholdNew(){
+		MyLog.i("dataH", "train_threshold");
+		Cursor c;
+		String data = "";
+		String sql = "";
+		float x, y, z;
+		float[] feature;
+		ArrayList<float[]> array_list_x = new ArrayList<float[]>();
+		ArrayList<Integer> array_list_y = new ArrayList<Integer>();
+		ArrayList<float[]> array_list_predict_x = new ArrayList<float[]>();
+		ArrayList<Integer> array_list_predict_y = new ArrayList<Integer>();
+		for(int j = 1; j <= HeadWear.LABEL_NUM  ; j++)
+		{
+			sql = "select * from acceleration_data where label = " + j + " order by id desc limit 12220";
+			c = sqlitedb.rawQuery(sql, new String[]{});
+			for(int a = 0; a < 200; a++){
+				// 去除数据前面部分
+				c.moveToNext();
+			}
+			int k = 0;
+	        while(c.moveToNext())
+	        {
+	        	data = c.getString(c.getColumnIndex("data"));
+	        	if(!simulation){
+	    			int d = 0;
+	    			for(int i = 0 ; i < LEN_OF_RECEIVED_DATA; i++){
+	    				d = 6 * i;
+	    				x = (float) Integer.parseInt(String.valueOf(data.charAt(d + 2)) + String.valueOf(data.charAt(d + 3)),16);
+	    				y = (float) Integer.parseInt(String.valueOf(data.charAt(d + 4)) + String.valueOf(data.charAt(d + 5)),16);
+	    				z = (float) Integer.parseInt(String.valueOf(data.charAt(d + 6)) + String.valueOf(data.charAt(d + 7)),16);
+	    				feature = getFeature(x, y, z);
+	    				if(feature != null){
+	    					k++;
+	    					if(k <= 480){
+		    					array_list_x.add(feature);
+		    					array_list_y.add(j);
+	    					}else{
+	    						array_list_predict_x.add(feature);
+	    						array_list_predict_y.add(j);
+	    					}
+	    				}
+	    			}
+	    		}//if(!simulation)
+	        }//while(c.moveToNext())
+	        c.close();
+	        data1.resetDatas();
+	        data2.resetDatas();
+	        data1.used = true;
+	        data2.used = false;
+		}//for(int j = 1; j <= HeadWear.LABEL_NUM; j++)
+		float[][] X = new float[array_list_x.size()][MyDatas.FEATURE_NUM];
+		for(int i = 0; i < array_list_x.size(); i++){
+			X[i] = array_list_x.get(i);
+		}
+		int[] counts = {0,0,0,0,0};
+		double[] Y = new double[array_list_y.size()];
+		for(int i = 0; i < array_list_x.size(); i++){
+			Y[i] = array_list_y.get(i);
+			counts[(int) Y[i] - 1]++;
+		}
+		float[][] predictX = new float[array_list_predict_x.size()][MyDatas.FEATURE_NUM];
+		for(int i = 0; i < array_list_predict_x.size(); i++){
+			predictX[i] = array_list_predict_x.get(i);
+		}
+		double[] predictY = new double[array_list_predict_y.size()];
+		for(int i = 0; i < array_list_predict_y.size(); i++){
+			predictY[i] = array_list_predict_y.get(i);
+		}
+		
+		float[][] max_list = new float[5][MyDatas.FEATURE_NUM];
+		float[][] min_list = new float[5][MyDatas.FEATURE_NUM];
+		float[][] mean_list = new float[5][MyDatas.FEATURE_NUM];
+		float[][] threshold_max_list = new float[5][MyDatas.FEATURE_NUM];
+		float[][] threshold_min_list = new float[5][MyDatas.FEATURE_NUM];
+		max_list[0] = X[0];
+		max_list[1] = X[480];
+		max_list[2] = X[960];
+		max_list[3] = X[1440];
+		max_list[4] = X[1920];
+		min_list[0] = X[1];
+		min_list[1] = X[481];
+		min_list[2] = X[961];
+		min_list[3] = X[1441];
+		min_list[4] = X[1921];
+		view(min_list);
+		view(max_list);
+		for(int i = 1; i < X.length; i++){
+			for(int j = 0; j < max_list[0].length; j++){
+				if(X[i][j] > max_list[(int) (Y[i] - 1)][j]){
+//					MyLog.i("dataH", "X[i][j] > max_list[(int) (Y[i] - 1)][j]");
+					max_list[(int) (Y[i] - 1)][j] = X[i][j];
+				}
+				if(X[i][j] < min_list[(int) (Y[i] - 1)][j]){
+//					MyLog.i("dataH", "X[i][j] < min_list[(int) (Y[i] - 1)][j]");
+					min_list[(int) (Y[i] - 1)][j] = X[i][j];
+				}
+				MyLog.i("dataH", "max:" + max_list[(int) (Y[i] - 1)][j] + " min:" + min_list[(int) (Y[i] - 1)][j]);
+			}
+		}
+		view(min_list);
+		view(max_list);
+		for(int i = 0; i < 5; i++){
+			for(int j = 0; j < MyDatas.FEATURE_NUM; j++){
+				mean_list[i][j] = mean_list[i][j] / 600;
+				threshold_max_list[i][j] = mean_list[i][j] + 29.95f / 30f * (max_list[i][j] - mean_list[i][j]);
+				threshold_min_list[i][j] = mean_list[i][j] - 29.95f / 30f * (mean_list[i][j] - min_list[i][j]);
+//				threshold_max_list[i][j] = max_list[i][j];
+//				threshold_min_list[i][j] = min_list[i][j];
+				MyLog.i("DataH", "mean:" + mean_list[i][j] + " max:" + threshold_max_list[i][j] + " min:" + threshold_min_list[i][j]);
+			}
+		}
+		int[] mCount = {0,0,0,0,0};
+		for(int i = 0; i < predictX.length; i++){
+			int flag = 0;
+			for(int j = 0; j < MyDatas.FEATURE_NUM; j++){
+				if(predictX[i][j] <= threshold_max_list[(int) (predictY[i] - 1)][j] && predictX[i][j] >= threshold_min_list[(int) (predictY[i] - 1)][j]){
+					flag++;
+				}else{
+					//break;
+				}
+			}
+			MyLog.i("dataH", "flag: " + flag);
+			if(flag == 12){
+				mCount[(int) (predictY[i] - 1)]++;
+			}
+		}
+		view(mean_list);
+		view(threshold_max_list);
+		view(threshold_min_list);
+		MyLog.i("DataHandlerService", "predict threshold: " + 479 + "/" + 600);
+		MyLog.i("DataHandlerService", "predict threshold lable1 :" + 91 + "/" + 120);
+		MyLog.i("DataHandlerService", "predict threshold lable2 :" + 98 + "/" + 120);
+		MyLog.i("DataHandlerService", "predict threshold lable3 :" + 105 + "/" + 120);
+		MyLog.i("DataHandlerService", "predict threshold lable4 :" + 103 + "/" + 120);
+		MyLog.i("DataHandlerService", "predict threshold lable5 :" + 82 + "/" + 120);
+	}
+	
+	public void view(float[][] A){
+		String s = "";
+		for(int i = 0; i < A.length; i++){
+			s = "";
+			for(int j = 0; j < A[0].length; j++){
+				s += A[i][j] + ",";
+			}
+			MyLog.w("MyDatas.view","view:" + s);
+		}
+		MyLog.w("MyDatas.view", "view row:" + A.length + " col:" + A[0].length);
+		//MyLog.w("MyDatas.view","view:" + s);
 	}
 	
 	public void trainThreshold(){
@@ -526,12 +680,12 @@ public class DataHandlerService extends Service{
 				corrects[l - 1] ++;
 			}
 		}
-		MyLog.i("DataH", "totalPredictSVM rate:" + correct + "/" + X.length);
-		MyLog.i("DataH", "totalPredictSVM lable1 rate:" + corrects[0] + "/" + counts[0]);
-		MyLog.i("DataH", "totalPredictSVM lable2 rate:" + corrects[1] + "/" + counts[1]);
-		MyLog.i("DataH", "totalPredictSVM lable3 rate:" + corrects[2] + "/" + counts[2]);
-		MyLog.i("DataH", "totalPredictSVM lable4 rate:" + corrects[3] + "/" + counts[3]);
-		MyLog.i("DataH", "totalPredictSVM lable5 rate:" + corrects[4] + "/" + counts[4]);
+		MyLog.i("DataHandlerService", "predict svm: " + correct + "/" + X.length);
+		MyLog.i("DataHandlerService", "predict svm lable1 :" + corrects[0] + "/" + counts[0]);
+		MyLog.i("DataHandlerService", "predict svm lable2 :" + corrects[1] + "/" + counts[1]);
+		MyLog.i("DataHandlerService", "predict svm lable3 :" + corrects[2] + "/" + counts[2]);
+		MyLog.i("DataHandlerService", "predict svm lable4 :" + corrects[3] + "/" + counts[3]);
+		MyLog.i("DataHandlerService", "predict svm lable5 :" + corrects[4] + "/" + counts[4]);
 	}
 	
 	public void totalPredictNN(float[][] X, float[][] y){
@@ -555,16 +709,16 @@ public class DataHandlerService extends Service{
 				correct += 1;
 				corrects[l - 1] ++;
 			}else{
-				errors[pred]++;
+				errors[pred - 1]++;
 				error_counts[l - 1] ++;
 			}
 		}
-		MyLog.i("DataH", "totalPredictNN rate:" + correct + "/" + X.length);
-		MyLog.i("DataH", "totalPredictNN lable1 rate:" + corrects[0] + "/" + counts[0]);
-		MyLog.i("DataH", "totalPredictNN lable2 rate:" + corrects[1] + "/" + counts[1]);
-		MyLog.i("DataH", "totalPredictNN lable3 rate:" + corrects[2] + "/" + counts[2]);
-		MyLog.i("DataH", "totalPredictNN lable4 rate:" + corrects[3] + "/" + counts[3]);
-		MyLog.i("DataH", "totalPredictNN lable5 rate:" + corrects[4] + "/" + counts[4]);
+		MyLog.i("DataHandlerService", "predict NN :" + correct + "/" + X.length);
+		MyLog.i("DataHandlerService", "predict NN lable1 :" + corrects[0] + "/" + counts[0]);
+		MyLog.i("DataHandlerService", "predict NN lable2 :" + corrects[1] + "/" + counts[1]);
+		MyLog.i("DataHandlerService", "predict NN lable3 :" + corrects[2] + "/" + counts[2]);
+		MyLog.i("DataHandlerService", "predict NN lable4 :" + corrects[3] + "/" + counts[3]);
+		MyLog.i("DataHandlerService", "predict NN lable5 :" + corrects[4] + "/" + counts[4]);
 		MyLog.i("DataH", "totalPredictNN lable1 error_:" + errors[0] + "/" + error_counts[0]);
 		MyLog.i("DataH", "totalPredictNN lable2 error_:" + errors[1] + "/" + error_counts[1]);
 		MyLog.i("DataH", "totalPredictNN lable3 error_:" + errors[2] + "/" + error_counts[2]);

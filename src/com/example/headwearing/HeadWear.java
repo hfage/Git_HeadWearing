@@ -354,7 +354,7 @@ public class HeadWear extends Activity {
 					mDataHandlerService.trainSVM();
 				}else if(type == 2){
 					tv.setText("Train threshold");
-					mDataHandlerService.trainThreshold();
+					mDataHandlerService.trainThresholdNew();
 				}
 			}else{
 				// 
